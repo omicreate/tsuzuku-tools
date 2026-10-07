@@ -372,7 +372,6 @@ dialog::backdrop { background:rgba(15,23,36,.45); }
   var KEY = 'tsuzuku-66days-v1', DAYS = 66, WEEKS = Math.ceil(DAYS / 7);
   var $ = function (id) { return document.getElementById(id); };
   var CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
-  var CIRCLE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><circle cx="12" cy="12" r="8"/></svg>';
 
   // ---- 保存（使えない環境でも画面は動かす）----
   function load() {
@@ -438,7 +437,7 @@ dialog::backdrop { background:rgba(15,23,36,.45); }
       if (t === 21) return '21日目の〇。「21日で習慣になる」と言われることがあるけれど、研究ではまだ途中。ここからが本番。';
       if (n === 1) return '最初の〇がつきました。今日はこれで十分です。';
       if (n % 10 === 0) return '合計 ' + n + ' 日。積み上げが形になってきました。';
-      return '今日の〇がつきました。合計 ' + n + ' 日。また明日。';
+      return '合計 ' + n + ' 日。また明日。';
     }
     if (y >= 1 && !has(y)) return '昨日は空白。でも大丈夫。空いた日は、あとから〇をつけ直せます。';
     if (t === 21) return '21日目。研究では、習慣になるのはまだ先。ここからが本番。';
@@ -547,7 +546,7 @@ dialog::backdrop { background:rgba(15,23,36,.45); }
     // 今日のボタン
     var btn = $('todayBtn'), on = inRange && has(t);
     btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    btn.innerHTML = on ? CHECK + '<span>今日はできた</span>' : CIRCLE + '<span>今日の〇をつける</span>';
+    btn.innerHTML = on ? CHECK + '<span>今日はできた</span>' : '<span>今日できた</span>';
     $('todaySub').textContent = !inRange ? '' : (on ? 'もう一度押すと取り消せます' : dateOf(t) + '（' + t + '日目）');
 
     // マス目
@@ -577,7 +576,7 @@ dialog::backdrop { background:rgba(15,23,36,.45); }
     var cell = document.querySelector('.cell[data-day="' + d + '"]');
     if (cell && !was) { cell.classList.add('pop'); try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) {} }
     lastAction = d;
-    showToast(was ? d + '日目の〇を外しました' : (fromToday ? '今日の〇をつけました' : d + '日目に〇をつけました'), true);
+    showToast(was ? d + '日目の〇を外しました' : (fromToday ? '今日を記録しました' : d + '日目に〇をつけました'), true);
   }
   function showToast(text, canUndo) {
     $('toastText').textContent = text; $('toastUndo').hidden = !canUndo; $('toast').hidden = false;
