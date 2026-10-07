@@ -1,6 +1,6 @@
 {
-  "name": "66日チェック表｜つづくラボ",
-  "short_name": "66日チェック表",
+  "name": "66日チェック｜つづくラボ",
+  "short_name": "66日チェック",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

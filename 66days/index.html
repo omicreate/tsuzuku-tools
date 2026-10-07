@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>66日チェック表｜つづくラボ</title>
-<meta name="description" content="習慣が身につくまでの66日を、1日1タップで記録するチェック表。数えるのは連続じゃなく合計。記録はこの端末にだけ保存されます。">
+<title>66日チェック｜つづくラボ</title>
+<meta name="description" content="習慣が身につくまでの66日を、1日1タップで記録するアプリ。数えるのは連続じゃなく合計。相棒が声をかけてくれます。記録はこの端末にだけ保存されます。">
 <meta name="theme-color" content="#F3F6FA" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0F1724" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
@@ -158,7 +158,7 @@ footer { font-size:12px; color:var(--muted); display:flex; flex-direction:column
 .today-sub { text-align:center; font-size:12px; color:var(--muted); margin-top:6px; min-height:18px; }
 
 .toast { position:fixed; left:16px; right:16px; bottom:calc(var(--bar-h) + 28px + env(safe-area-inset-bottom, 0px)); max-width:488px; margin:0 auto; background:var(--fg); color:var(--bg); border-radius:14px; padding:6px 6px 6px 16px; min-height:52px; display:flex; align-items:center; justify-content:space-between; gap:12px; box-shadow:var(--shadow); z-index:20; font-size:15px; }
-.toast .btn-text { color:var(--bg); text-decoration:underline; }
+.toast .btn-text { color:var(--bg); text-decoration:underline; flex:none; white-space:nowrap; }
 body:not(.has-bar) .toast { bottom:calc(20px + env(safe-area-inset-bottom, 0px)); }
 
 dialog { border:none; border-radius:24px 24px 0 0; padding:0; width:100%; max-width:520px; margin:auto auto 0; background:var(--surface); color:var(--fg); max-height:85vh; }
@@ -170,8 +170,34 @@ dialog::backdrop { background:rgba(15,23,36,.45); }
 .sheet .item:hover { background:var(--bg); }
 .sheet .item.danger { color:var(--danger); }
 
+/* 相棒：66日、となりで声をかける人 */
+.buddy-list { display:flex; flex-direction:column; gap:8px; }
+.buddy-opt { width:100%; text-align:left; min-height:64px; padding:10px 14px; border-radius:16px; border:1.5px solid var(--line); background:var(--bg); color:var(--fg); display:flex; flex-direction:column; gap:2px; }
+.buddy-opt b { font-family:var(--display); font-size:17px; }
+.buddy-opt span { font-size:13px; color:var(--muted); }
+.buddy-opt q { font-size:14px; font-weight:700; color:var(--ink-strong); quotes:"「" "」"; }
+.buddy-opt[aria-pressed="true"] { border-color:var(--ink); background:var(--ink-soft); }
+.buddy-line { padding:12px 14px; border-radius:14px; background:var(--ink-soft); display:flex; flex-direction:column; gap:2px; }
+.buddy-line .who { font-size:12px; font-weight:700; color:var(--muted); }
+.buddy-line .say { font-family:var(--display); font-weight:700; font-size:17px; line-height:1.5; color:var(--ink-strong); }
+/* お祝い：合計21日・66日目・何日か空いて戻ってきた日だけ */
+.celebrate { position:fixed; inset:0; z-index:30; display:grid; place-items:center; padding:24px; background:rgba(15,23,36,.55); }
+.celebrate .burst { position:absolute; left:50%; top:50%; width:0; height:0; pointer-events:none; }
+.celebrate .burst i { position:absolute; width:12px; height:12px; left:-6px; top:-6px; border-radius:50%; background:var(--ink); opacity:0; animation:fly 1.2s cubic-bezier(.2,.7,.3,1) forwards; }
+.celebrate .burst i:nth-child(3n) { border-radius:3px; background:var(--ink-strong); }
+.celebrate .burst i:nth-child(3n+1) { background:#9CC1EE; }
+@keyframes fly { 0% { transform:translate(0,0) scale(.3); opacity:1; } 100% { transform:translate(var(--x), var(--y)) scale(1); opacity:0; } }
+.cele-card { position:relative; width:100%; max-width:420px; background:var(--surface); border-radius:24px; padding:26px 22px 14px; display:flex; flex-direction:column; gap:10px; text-align:center; box-shadow:var(--shadow); animation:rise .45s cubic-bezier(.2,.8,.3,1.2); }
+@keyframes rise { 0% { transform:scale(.85); opacity:0; } 100% { transform:scale(1); opacity:1; } }
+.cele-card .big { font-family:var(--display); font-weight:900; font-size:44px; line-height:1.1; color:var(--ink); }
+.cele-card .say { font-family:var(--display); font-weight:900; font-size:22px; line-height:1.5; text-wrap:balance; word-break:auto-phrase; }
+.cele-card .who { font-size:13px; color:var(--muted); font-weight:700; }
+.check { display:flex; gap:10px; align-items:center; min-height:48px; font-weight:700; }
+.check input { width:22px; height:22px; accent-color:var(--ink); flex:none; }
+dialog { overflow:auto; }
+
 @media print {
-  .bar, .top button, .toast, .notice, footer, .no-print, details.tips summary svg { display:none !important; }
+  .bar, .top button, .toast, .notice, footer, .no-print, .celebrate, #buddyCard, #buddySay, details.tips summary svg { display:none !important; }
   body { background:#fff; color:#000; }
   .wrap { padding:0; }
   .card { border-color:#999; break-inside:avoid; }
@@ -184,7 +210,7 @@ dialog::backdrop { background:rgba(15,23,36,.45); }
 <div class="wrap">
 
   <div class="top">
-    <div class="brand"><small>TSUZUKU LAB</small><b>66日チェック表</b></div>
+    <div class="brand"><small>TSUZUKU LAB</small><b>66日チェック</b></div>
     <button class="icon-btn" id="menuBtn" type="button" aria-label="メニュー" hidden>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
     </button>
@@ -251,12 +277,21 @@ dialog::backdrop { background:rgba(15,23,36,.45); }
       <button type="button" class="btn-text" id="returnClose" style="align-self:flex-end">閉じる</button>
     </div>
 
+    <!-- 相棒をえらぶ（まだ選んでいない人に1回だけ） -->
+    <div class="card accent" id="buddyCard" hidden>
+      <span class="label">相棒</span>
+      <h2>66日、となりで声をかけてくれる相棒を1人えらんでください</h2>
+      <p class="small muted">「今日できた」を押すと、相棒が一言かけてくれます。あとからメニューで変えられます。</p>
+      <div class="buddy-list" id="buddyList"></div>
+      <button type="button" class="btn-text" id="buddyNone" style="align-self:flex-end">相棒なしで使う</button>
+    </div>
+
     <!-- 66日を終えたとき -->
     <div class="card accent" id="finishCard" hidden>
       <span class="label">DAY 66</span>
       <h2 style="font-size:28px">66日、<wbr>おつかれさまでした</h2>
       <div class="stat2">
-        <div><span class="label">〇がついた日</span><b id="finTotal">0<small>/ 66日</small></b></div>
+        <div><span class="label">できた日</span><b id="finTotal">0<small>/ 66日</small></b></div>
         <div id="finAutoBox"><span class="label">考えずにできた度</span><b id="finAuto">-<small>/ 5</small></b></div>
       </div>
       <p class="msg-box">考えずにできるようになっていたら、それが習慣です。まだでも大丈夫。研究では、人によって254日かかることもあります。</p>
@@ -281,6 +316,7 @@ dialog::backdrop { background:rgba(15,23,36,.45); }
           <span class="trend" id="autoTrend"></span>
         </div>
         <p class="msg" id="msg" aria-live="polite"></p>
+        <div class="buddy-line" id="buddySay" hidden><span class="who" id="buddyWho"></span><span class="say" id="buddyText"></span></div>
         <button type="button" class="btn" id="startTodayBtn" hidden>今日から始める</button>
       </div>
     </div>
@@ -337,12 +373,24 @@ dialog::backdrop { background:rgba(15,23,36,.45); }
   </div>
 </div>
 
+<div class="celebrate" id="celebrate" role="dialog" aria-modal="true" aria-labelledby="celeSay" hidden>
+  <div class="burst" id="celeBurst" aria-hidden="true"></div>
+  <div class="cele-card">
+    <span class="big" id="celeLabel"></span>
+    <p class="say" id="celeSay"></p>
+    <span class="who" id="celeWho"></span>
+    <button type="button" class="btn btn-primary" id="celeClose">とじる</button>
+  </div>
+</div>
+
 <div class="toast" id="toast" role="status" hidden><span id="toastText"></span><button type="button" class="btn-text" id="toastUndo">元に戻す</button></div>
 
 <dialog id="menu" aria-labelledby="menuTitle">
   <div class="sheet" id="menuMain">
     <h2 id="menuTitle">メニュー</h2>
     <button type="button" class="item" id="mEdit">計画を変える<small>きっかけ・やることを直せます。これまでの〇はそのまま</small></button>
+    <button type="button" class="item" id="mBuddy">相棒を変える<small id="mBuddyNow">声をかけてくれる人をえらび直せます</small></button>
+    <button type="button" class="item" id="mShare">記録を画像でシェア<small>合計とマス目を1枚の画像に。習慣の中身は入れるか選べます</small></button>
     <button type="button" class="item" id="mBackup">記録をバックアップする<small>文字のかたまりをコピーして、メモ帳などに貼っておく</small></button>
     <button type="button" class="item" id="mRestore">バックアップから戻す<small>機種変更したときや、記録が消えたときに</small></button>
     <button type="button" class="item" id="mPrint">印刷する<small>紙のチェック表としても使えます</small></button>
@@ -360,6 +408,18 @@ dialog::backdrop { background:rgba(15,23,36,.45); }
     <textarea id="restoreText" aria-label="バックアップの文字を貼り付ける" placeholder="ここにバックアップの文字を貼り付け"></textarea>
     <p class="err" id="restoreErr" role="alert" hidden></p>
     <div class="form-actions"><button type="button" class="btn" data-back>もどる</button><button type="button" class="btn btn-primary" id="restoreBtn">この記録に戻す</button></div>
+  </div>
+  <div class="sheet" id="menuBuddy" hidden>
+    <h2>相棒を変える</h2>
+    <div class="buddy-list" id="buddyListMenu"></div>
+    <div class="form-actions"><button type="button" class="btn" data-back>もどる</button><button type="button" class="btn" id="buddyNoneMenu">相棒なし</button></div>
+  </div>
+  <div class="sheet" id="menuShare" hidden>
+    <h2>記録を画像でシェア</h2>
+    <img id="shareImg" alt="シェアする画像の見本" style="width:100%; border-radius:14px; border:1px solid var(--line); background:var(--bg); aspect-ratio:4 / 5">
+    <label class="check"><input type="checkbox" id="shareHabit">習慣の中身（きっかけ・やること）を入れる</label>
+    <p class="small muted" id="shareMsg">画像はこの端末の中で作ります。どこにも送られません。</p>
+    <div class="form-actions"><button type="button" class="btn" data-back>もどる</button><button type="button" class="btn btn-primary" id="shareBtn">シェアする</button></div>
   </div>
   <div class="sheet" id="menuReset" hidden>
     <h2>記録を消しますか？</h2>
@@ -400,7 +460,93 @@ dialog::backdrop { background:rgba(15,23,36,.45); }
   function scores() { var out = []; for (var w = 1; w <= WEEKS; w++) { var v = Number(state.auto[w]); if (v >= 1 && v <= 5) out.push({ w: w, v: v }); } return out; }
 
   var state = load();
-  var editing = false, lastAction = null, toastTimer = null;
+  var editing = false, lastAction = null, toastTimer = null, afterCelebrate = null;
+
+  // ---- 相棒：66日、となりで声をかける人（00_設計/相棒モード.md）----
+  // 約束：抜けた日を責めない／体・見た目・恋愛・家族に触れない／人と比べない／命令で押さない／研究の数字は確かめたものだけ
+  // {n}=合計 {t}=今日が何日目 {rest}=のこり日数 {gap}=空いた日数 {from}{to}=考えずにできた度
+  var BUDDIES = {
+    homechi: { name: 'ほめちぎりコーチ', desc: 'どんな小さな1回も、全力で拍手する', sample: 'ブラボー！その1回、国宝級です',
+      first: ['最初の1回！もう伝説の第1話が始まってます！'],
+      done: ['今日もやった！？天才では！？', 'ブラボー！その1回、国宝級です', '本日のMVP、満場一致であなたです', 'その1回に、スタンディングオベーションです！', '{t}日目もクリア！すごすぎません？'],
+      back: ['おかえりなさい！戻ってこられるの、才能の中の才能です！', 'ナイスカムバック！拍手が鳴りやみません'],
+      m21: ['もう伝説の入り口に立ってます！'],
+      m66: ['66日！！レジェンド爆誕！！一生ほめます'],
+      up: ['考えなくてもできてきた？体が覚えた証拠。かっこよすぎる'] },
+    sontaku: { name: '忖度ゼロ博士', desc: '数字と研究だけで話す。ほめない。責めもしない', sample: '記録した。合計23日。66日目まで、のこり36日',
+      first: ['1回目を記録。始めた人だけが、データになる'],
+      done: ['記録した。合計{n}日。66日目まで、のこり{rest}日', '本日分、確認。以上', '{t}日目、記録。合計{n}日'],
+      back: ['{gap}日空いた。研究では、1日抜けても習慣づくりへの影響はほぼなかった。続行'],
+      m21: ['よく言われる日数だが、研究のまん中は66日。まだ途中だ'],
+      m66: ['66日到達。研究のまん中と同じ。ただし254日かかった人もいた。判断は点数で'],
+      up: ['考えずにできた度、{from}から{to}へ。自動化が進んでいる'] },
+    nokin: { name: '脳筋トレーナー', desc: '人生はすべて筋トレ。答えはだいたい「次のセット」', sample: 'ナイスレップ！習慣の筋肉が太くなった！',
+      first: ['1レップ目、いいぞ！すべての筋肉は1回から始まる！'],
+      done: ['ナイスレップ！習慣の筋肉、今日も1回分太くなった！', 'いいフォームだ！その1回が効いてる！', '{t}セット目、完了！明日もいこう！'],
+      back: ['休むのもトレーニングのうち！1日休んでも筋肉は消えない！さあ次のセットだ！'],
+      m21: ['21レップ達成！ウォームアップ完了、ここからメインセットだ！'],
+      m66: ['66日完走！プロテインで乾杯だ！！'],
+      up: ['考えずに体が動く？それが「体が覚えた」ってやつだ！'] },
+    jikkyo: { name: '実況アナ', desc: 'あなたの毎日を、スポーツ中継のように実況する', sample: '決めたーっ！きっちり決めてきました！',
+      first: ['さあ試合開始のホイッスル！記念すべき第1回、決まりました！'],
+      done: ['決めたーっ！{t}日目、きっちり決めてきました！', 'さあ今日も来た！迷いのないフォーム！', '合計{n}本目！積み上げが止まりません！'],
+      back: ['おーっと、ここで戻ってきた！{gap}日のブランクからの復帰戦、これは大きい！'],
+      m21: ['21日の壁を突破！スタジアムが揺れています！'],
+      m66: ['66日、完走ーっ！歴史が動いた瞬間です！'],
+      up: ['解説の博士、これは？「自動化が進んでいますね」'] },
+    okan: { name: 'オカン', desc: 'とにかく心配して、とにかく味方。関西弁', sample: '今日もやったん？えらいなぁ',
+      first: ['始めたん？えらいやん！お母さん、もう応援しとるで'],
+      done: ['今日もやったん？えらいなぁ。ちゃんとご飯も食べや', 'あんたはやればできる子やって、お母さん知ってたで', '{t}日目もやったんか。たいしたもんや'],
+      back: ['おかえり。忙しかったんやろ。ええねん、ええねん。今日やったら、それでええ'],
+      m21: ['21日も！？ご近所さんに自慢しとくわ'],
+      m66: ['66日！？赤飯炊かな！'],
+      up: ['もう考えんでもできるん？たいしたもんやわ'] }
+  };
+  // 相棒なしのときのお祝いの言葉
+  var PLAIN = { m21: '合計21日。研究では、ここはまだ途中。ここからが本番です。', m66: '66日、おつかれさまでした。', back: 'おかえりなさい。これまでの〇は、そのまま残っています。' };
+  var CELE_LABEL = { m21: '合計21日', m66: '66日目', back: 'おかえり' };
+  function buddy() { return state && state.buddy && BUDDIES[state.buddy] ? BUDDIES[state.buddy] : null; }
+  function say(kind, v) { // 同じ一言が2日続かないよう、日にちで順に回す
+    var B = buddy(); if (!B) return '';
+    var list = B[kind] || B.done, line = list[((v.t || 0) + kind.length) % list.length];
+    return line.replace(/\{(\w+)\}/g, function (_, k) { return v[k] != null ? v[k] : ''; });
+  }
+  function fillBuddies(box, onPick) {
+    box.textContent = '';
+    Object.keys(BUDDIES).forEach(function (id) {
+      var B = BUDDIES[id], x = document.createElement('button');
+      x.type = 'button'; x.className = 'buddy-opt'; x.dataset.id = id;
+      x.setAttribute('aria-pressed', state && state.buddy === id ? 'true' : 'false');
+      var b = document.createElement('b'); b.textContent = B.name;
+      var sp = document.createElement('span'); sp.textContent = B.desc;
+      var q = document.createElement('q'); q.textContent = B.sample;
+      x.append(b, sp, q); box.appendChild(x);
+    });
+    box.onclick = function (e) { var x = e.target.closest('.buddy-opt'); if (x) onPick(x.dataset.id); };
+  }
+  function pickBuddy(id) {
+    state.buddy = id; save(); render();
+    var B = buddy();
+    showToast(B ? B.name + '「' + B.first[0] + '」' : '相棒なしで使います。メニューからいつでもえらべます', false);
+  }
+  function celebrate(kind, text) {
+    var B = buddy();
+    $('celeLabel').textContent = CELE_LABEL[kind];
+    $('celeSay').textContent = text || PLAIN[kind];
+    $('celeWho').textContent = B && text ? '― ' + B.name : '';
+    var burst = $('celeBurst'); burst.textContent = '';
+    for (var k = 0; k < 24; k++) {
+      var a = k / 24 * Math.PI * 2, r = 130 + (k % 4) * 35, i = document.createElement('i');
+      i.style.setProperty('--x', Math.round(Math.cos(a) * r) + 'px'); i.style.setProperty('--y', Math.round(Math.sin(a) * r) + 'px');
+      i.style.animationDelay = (k % 3) * 0.07 + 's'; burst.appendChild(i);
+    }
+    $('celebrate').hidden = false; $('celeClose').focus();
+    try { if (navigator.vibrate) navigator.vibrate([18, 60, 18]); } catch (e) {}
+  }
+  function closeCelebrate() {
+    $('celebrate').hidden = true;
+    if (afterCelebrate) { var f = afterCelebrate; afterCelebrate = null; f(); }
+  }
 
   // ---- 計画づくり ----
   function updateRecipe() {
@@ -535,6 +681,19 @@ dialog::backdrop { background:rgba(15,23,36,.45); }
       });
     }
 
+    // 相棒をえらぶ（お願いは一度に1つだけ：空いた日 ＞ 週のふり返り ＞ 相棒）
+    var askBuddy = state.buddy === undefined && !showReturn && !w;
+    $('buddyCard').hidden = !askBuddy;
+    if (askBuddy) fillBuddies($('buddyList'), pickBuddy);
+
+    // 今日できた日は、相棒の一言を出す（押したときの一言を、その日のあいだ残す）
+    var B = buddy(), showSay = !!B && inRange && has(t);
+    $('buddySay').hidden = !showSay; $('msg').hidden = showSay;
+    if (showSay) {
+      var said = state.said && state.said.day === t && state.said.start === state.start && state.said.buddy === state.buddy ? state.said.text : say('done', { n: n, t: t, rest: DAYS - t });
+      $('buddyWho').textContent = B.name; $('buddyText').textContent = said;
+    }
+
     // 66日を終えたとき
     $('finishCard').hidden = !finished;
     $('statusPart').hidden = finished;
@@ -573,16 +732,32 @@ dialog::backdrop { background:rgba(15,23,36,.45); }
     state.done.sort(function (x, y) { return x - y; });
   }
   function toggle(d, fromToday) {
-    var was = has(d);
-    setDone(d, !was); save(); render();
+    var was = has(d), before = state.done.length, gap = fromToday && !was ? missedRun(d).length : 0;
+    setDone(d, !was);
+    var n = state.done.length, kind = null, text = '';
+    if (!was) {
+      if (fromToday && d === DAYS) kind = 'm66';
+      else if (n === 21) kind = 'm21';
+      else if (fromToday && before === 0) kind = 'first';
+      else if (fromToday && gap >= 1) kind = 'back';
+      else if (fromToday) kind = 'done';
+      if (kind) text = say(kind, { n: n, t: d, rest: DAYS - d, gap: gap });
+      if (fromToday && text) state.said = { day: d, start: state.start, buddy: state.buddy, text: text };
+    }
+    save(); render();
     var cell = document.querySelector('.cell[data-day="' + d + '"]');
     if (cell && !was) { cell.classList.add('pop'); try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) {} }
     lastAction = d;
-    showToast(was ? d + '日目の〇を外しました' : (fromToday ? '今日を記録しました' : d + '日目に〇をつけました'), true);
+    var B = buddy(), note = was ? d + '日目の〇を外しました' : (fromToday ? '今日を記録しました' : d + '日目に〇をつけました');
+    // 大きなお祝いは、合計21日・66日目・2日以上空いて戻ってきた日だけ。毎日は一言だけ
+    if (kind === 'm21' || kind === 'm66' || (kind === 'back' && gap >= 2)) {
+      afterCelebrate = function () { showToast(note, true); };
+      celebrate(kind, text);
+    } else showToast(text && B ? B.name + '「' + text + '」' : note, true);
   }
   function showToast(text, canUndo) {
     $('toastText').textContent = text; $('toastUndo').hidden = !canUndo; $('toast').hidden = false;
-    clearTimeout(toastTimer); toastTimer = setTimeout(function () { $('toast').hidden = true; }, 5000);
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { $('toast').hidden = true; }, text.length > 24 ? 7000 : 5000);
   }
   function archiveAndReset(sameHabit) {
     var sc = scores();
@@ -623,8 +798,11 @@ dialog::backdrop { background:rgba(15,23,36,.45); }
   $('lighterBtn').addEventListener('click', function () { openSetup('edit'); });
   $('scale').addEventListener('click', function (e) {
     var x = e.target.closest('button'); if (!x) return;
-    var w = Number($('weekCard').dataset.week); state.auto[w] = Number(x.dataset.v); save(); render();
-    showToast('第' + w + '週を記録しました', false);
+    var w = Number($('weekCard').dataset.week), v = Number(x.dataset.v);
+    var prev = scores().filter(function (s) { return s.w < w; }).pop();
+    state.auto[w] = v; save(); render();
+    var up = prev && v > prev.v ? say('up', { from: prev.v, to: v, t: w }) : '';
+    showToast(up ? buddy().name + '「' + up + '」' : '第' + w + '週を記録しました', false);
   });
   $('weekSkip').addEventListener('click', function () { var w = Number($('weekCard').dataset.week); state.auto[w] = 0; save(); render(); });
   $('toastUndo').addEventListener('click', function () {
@@ -639,14 +817,91 @@ dialog::backdrop { background:rgba(15,23,36,.45); }
 
   // ---- メニュー ----
   var menu = $('menu');
-  function sheet(id) { ['menuMain', 'menuBackup', 'menuRestore', 'menuReset'].forEach(function (s) { $(s).hidden = s !== id; }); }
-  function openMenu() { sheet('menuMain'); if (menu.showModal) menu.showModal(); else menu.setAttribute('open', ''); }
+  function sheet(id) { ['menuMain', 'menuBuddy', 'menuShare', 'menuBackup', 'menuRestore', 'menuReset'].forEach(function (s) { $(s).hidden = s !== id; }); }
+  function openMenu() { var B = buddy(); $('mBuddyNow').textContent = B ? 'いまの相棒：' + B.name : 'いまは相棒なし。声をかけてくれる人をえらべます'; sheet('menuMain'); if (menu.showModal) menu.showModal(); else menu.setAttribute('open', ''); }
   function closeMenu() { if (menu.close) menu.close(); else menu.removeAttribute('open'); }
   $('menuBtn').addEventListener('click', openMenu);
   $('mClose').addEventListener('click', closeMenu);
   menu.addEventListener('click', function (e) { if (e.target === menu) closeMenu(); });
   menu.querySelectorAll('[data-back]').forEach(function (b) { b.addEventListener('click', function () { sheet('menuMain'); }); });
   $('mEdit').addEventListener('click', function () { closeMenu(); openSetup('edit'); });
+  $('mBuddy').addEventListener('click', function () { fillBuddies($('buddyListMenu'), function (id) { closeMenu(); pickBuddy(id); }); sheet('menuBuddy'); });
+  $('buddyNoneMenu').addEventListener('click', function () { closeMenu(); pickBuddy('none'); });
+  $('buddyNone').addEventListener('click', function () { pickBuddy('none'); });
+  $('celeClose').addEventListener('click', closeCelebrate);
+  $('celebrate').addEventListener('click', function (e) { if (e.target === $('celebrate')) closeCelebrate(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('celebrate').hidden) closeCelebrate(); });
+
+  // ---- 記録を画像にする（この端末の中だけで作る）----
+  function wrapText(g, text, x, y, maxW, lh, maxLines) {
+    var line = '', lines = 0;
+    for (var i = 0; i < text.length; i++) {
+      var tryLine = line + text[i];
+      if (g.measureText(tryLine).width > maxW && line) { g.fillText(line, x, y); y += lh; line = text[i]; if (++lines >= maxLines - 1) { while (i + 1 < text.length && g.measureText(line + text[i + 1] + '…').width <= maxW) line += text[++i]; if (i + 1 < text.length) line += '…'; break; } }
+      else line = tryLine;
+    }
+    g.fillText(line, x, y); return y + lh;
+  }
+  function rrect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+  function drawShare(withHabit) {
+    var W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    var g = cv.getContext('2d'), C = { bg: '#F3F6FA', fg: '#18263B', muted: '#56677F', line: '#C9D4E3', ink: '#2C5F9E', soft: '#E3ECF7' };
+    var D = '"Zen Kaku Gothic New","Hiragino Sans",sans-serif', BD = '"Noto Sans JP","Hiragino Sans",sans-serif', M = '"DM Mono",ui-monospace,monospace';
+    var t = todayIndex(), n = state.done.length, B = buddy();
+    g.fillStyle = C.bg; g.fillRect(0, 0, W, H);
+    g.fillStyle = C.muted; g.font = '26px ' + M; g.fillText('TSUZUKU LAB', 84, 112);
+    g.fillStyle = C.fg; g.font = '900 54px ' + D; g.fillText('66日チェック', 84, 178);
+    var y = 250;
+    if (withHabit) {
+      g.fillStyle = C.ink; g.font = '900 44px ' + D; y = wrapText(g, state.cue, 84, y + 10, 912, 58, 2);
+      g.fillStyle = C.fg; g.font = '700 38px ' + D; y = wrapText(g, '→ ' + state.habit, 84, y, 912, 52, 2) + 6;
+    }
+    g.fillStyle = C.fg; g.font = '900 150px ' + D; g.fillText(String(n), 84, y + 128);
+    var nw = g.measureText(String(n)).width;
+    g.fillStyle = C.muted; g.font = '700 40px ' + D; g.fillText('/ 66日', 84 + nw + 16, y + 128);
+    g.textAlign = 'right'; g.fillStyle = C.fg; g.font = '700 36px ' + BD;
+    g.fillText(t > DAYS ? '66日が終了' : (t < 1 ? 'これから' : t + '日目'), W - 84, y + 128); g.textAlign = 'left';
+    y += 176;
+    var cs = 72, gp = 12; // 11列×6行＝66マス
+    for (var d = 1; d <= DAYS; d++) {
+      var cx = 84 + ((d - 1) % 11) * (cs + gp), cy = y + Math.floor((d - 1) / 11) * (cs + gp);
+      rrect(g, cx + 2, cy + 2, cs - 4, cs - 4, 16);
+      if (has(d)) { g.fillStyle = C.ink; g.fill(); }
+      else { g.lineWidth = 3; g.strokeStyle = C.line; if (d > t) g.setLineDash([8, 7]); g.stroke(); g.setLineDash([]); }
+    }
+    y += 6 * cs + 5 * gp + 44;
+    if (B) {
+      var said = state.said && state.said.buddy === state.buddy ? state.said.text : B.sample;
+      g.font = '900 36px ' + D; var lines = Math.min(2, Math.ceil(g.measureText('「' + said + '」').width / 840));
+      var bh = 64 + lines * 50; rrect(g, 84, y, 912, bh, 24); g.fillStyle = C.soft; g.fill();
+      g.fillStyle = C.muted; g.font = '700 24px ' + BD; g.fillText(B.name, 120, y + 46);
+      g.fillStyle = C.ink; g.font = '900 36px ' + D; wrapText(g, '「' + said + '」', 120, y + 96, 840, 50, 2);
+      y += bh + 30;
+    }
+    g.fillStyle = C.muted; g.font = '24px ' + M; g.fillText((location.host + location.pathname).replace(/index\.html$/, ''), 84, H - 72);
+    g.font = '700 24px ' + BD; g.fillText('数えるのは、連続じゃなく合計。', 84, H - 112);
+    return cv;
+  }
+  function refreshShare() {
+    var go = function () { try { $('shareImg').src = drawShare($('shareHabit').checked).toDataURL('image/png'); } catch (e) {} };
+    if (document.fonts && document.fonts.load) Promise.all([document.fonts.load('900 54px "Zen Kaku Gothic New"'), document.fonts.load('700 24px "Noto Sans JP"'), document.fonts.load('26px "DM Mono"')]).then(go, go); else go();
+  }
+  $('mShare').addEventListener('click', function () { $('shareMsg').textContent = '画像はこの端末の中で作ります。どこにも送られません。'; sheet('menuShare'); refreshShare(); });
+  $('shareHabit').addEventListener('change', refreshShare);
+  $('shareBtn').addEventListener('click', function () {
+    drawShare($('shareHabit').checked).toBlob(function (blob) {
+      if (!blob) return;
+      var file = new File([blob], 'tsuzuku-66days.png', { type: 'image/png' });
+      var url = location.origin + location.pathname.replace(/index\.html$/, '');
+      if (navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], text: '66日チェックで記録中。合計' + state.done.length + '日。 ' + url }).catch(function () {});
+      } else {
+        var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'tsuzuku-66days.png';
+        document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+        $('shareMsg').textContent = '画像を保存しました。写真やSNSから送れます。';
+      }
+    }, 'image/png');
+  });
   $('mPrint').addEventListener('click', function () { closeMenu(); setTimeout(function () { window.print(); }, 200); });
   $('mReset').addEventListener('click', function () { sheet('menuReset'); });
   $('resetYes').addEventListener('click', function () { try { localStorage.removeItem(KEY); } catch (e) {} state = null; closeMenu(); render(); });
