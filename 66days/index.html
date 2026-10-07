@@ -5,240 +5,674 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>66日チェック表｜つづくラボ</title>
 <meta name="description" content="習慣が身につくまでの66日を、1日1タップで記録するチェック表。数えるのは連続じゃなく合計。記録はこの端末にだけ保存されます。">
-<meta name="theme-color" content="#F3F6FA">
+<meta name="theme-color" content="#F3F6FA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F1724" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@700;900&family=Noto+Sans+JP:wght@400;500;700&family=DM+Mono&display=swap">
 <style>
-/* 1列の画面。上から「きっかけ→今日のボタン→66マス→ルール」。紙のチェック表と同じ並び */
+/* つづくラボ デザインシステムに準拠。片手で使う1列の画面。主役は「きっかけ」と、画面下の「今日の〇」 */
 :root {
-  --bg:#F3F6FA; --surface:#FFFFFF; --fg:#18263B; --muted:#5E6F87; --line:#D3DDEA;
-  --ink:#2C5F9E; --ink-soft:#E3ECF7; --on-ink:#FFFFFF;
+  --bg:#F3F6FA; --surface:#FFFFFF; --fg:#18263B; --muted:#56677F; --line:#D3DDEA;
+  --ink:#2C5F9E; --ink-strong:#1F4A80; --ink-soft:#E3ECF7; --on-ink:#FFFFFF; --danger:#B4232C; --shadow:0 8px 24px rgba(24,38,59,.08);
   --display:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif;
   --body:"Noto Sans JP","Hiragino Sans","Yu Gothic",sans-serif;
   --mono:"DM Mono",ui-monospace,monospace;
+  --bar-h:92px;
 }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --bg:#0F1724; --surface:#172234; --fg:#E6EDF6; --muted:#9DAEC4; --line:#2B3B53; --ink:#7FB0EC; --ink-soft:#1C2E47; --on-ink:#0F1724; color-scheme:dark; }
+  :root:not([data-theme="light"]) { --bg:#0F1724; --surface:#172234; --fg:#E6EDF6; --muted:#A3B3C8; --line:#2B3B53; --ink:#7FB0EC; --ink-strong:#A6C8F2; --ink-soft:#1C2E47; --on-ink:#0F1724; --danger:#F08A90; --shadow:0 8px 24px rgba(0,0,0,.35); color-scheme:dark; }
 }
-:root[data-theme="dark"] { --bg:#0F1724; --surface:#172234; --fg:#E6EDF6; --muted:#9DAEC4; --line:#2B3B53; --ink:#7FB0EC; --ink-soft:#1C2E47; --on-ink:#0F1724; color-scheme:dark; }
+:root[data-theme="dark"] { --bg:#0F1724; --surface:#172234; --fg:#E6EDF6; --muted:#A3B3C8; --line:#2B3B53; --ink:#7FB0EC; --ink-strong:#A6C8F2; --ink-soft:#1C2E47; --on-ink:#0F1724; --danger:#F08A90; --shadow:0 8px 24px rgba(0,0,0,.35); color-scheme:dark; }
+
 * { box-sizing:border-box; }
 [hidden] { display:none !important; }
 html, body { margin:0; }
-body { background:var(--bg); color:var(--fg); font-family:var(--body); font-size:16px; line-height:1.7; }
-.wrap { max-width:560px; margin:0 auto; padding-inline:16px; padding-block:calc(20px + env(safe-area-inset-top, 0px)) calc(40px + env(safe-area-inset-bottom, 0px)); display:flex; flex-direction:column; gap:20px; }
-.brand { font-family:var(--mono); font-size:12px; letter-spacing:.24em; color:var(--muted); }
-h1 { font-family:var(--display); font-weight:900; font-size:clamp(30px, 9vw, 40px); line-height:1.15; margin:0; text-wrap:balance; }
-.lead { margin:0; color:var(--muted); font-weight:500; }
-.lead b { color:var(--ink); }
-.panel { background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:18px; display:flex; flex-direction:column; gap:14px; }
-label { font-weight:700; font-size:14px; display:flex; flex-direction:column; gap:6px; }
-label small { font-weight:400; color:var(--muted); }
-input, select { font:inherit; color:var(--fg); background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:12px 12px; min-height:48px; width:100%; }
-input:focus-visible, select:focus-visible, button:focus-visible { outline:3px solid var(--ink); outline-offset:2px; }
-.row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-.row2 > * { min-width:0; }
-button { font:inherit; cursor:pointer; border-radius:12px; min-height:48px; padding:10px 16px; border:1px solid var(--line); background:var(--surface); color:var(--fg); font-weight:700; }
-.primary { background:var(--ink); color:var(--on-ink); border-color:var(--ink); font-size:18px; min-height:60px; }
-.primary[aria-pressed="true"] { background:var(--ink-soft); color:var(--ink); }
-.plan { font-family:var(--display); font-size:20px; font-weight:700; line-height:1.5; }
-.plan span { color:var(--ink); }
-.stats { display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; }
-.total { font-family:var(--display); font-weight:900; font-size:40px; line-height:1; font-variant-numeric:tabular-nums; }
-.total small { font-size:18px; color:var(--muted); font-weight:700; }
-.day { color:var(--muted); font-size:14px; }
-.msg { margin:0; padding:12px 14px; border-radius:12px; background:var(--ink-soft); color:var(--fg); font-size:15px; }
-.grid { display:grid; grid-template-columns:repeat(11, minmax(0, 1fr)); gap:5px; }
-.cell { aspect-ratio:1 / 1; max-width:100%; min-height:0; padding:0; border-radius:8px; border:1.5px solid var(--line); background:transparent; font-family:var(--mono); font-size:11px; font-weight:400; color:var(--muted); display:grid; place-items:center; }
+body { background:var(--bg); color:var(--fg); font-family:var(--body); font-size:16px; line-height:1.7; -webkit-tap-highlight-color:transparent; }
+.wrap { max-width:520px; margin:0 auto; padding-inline:16px; padding-block:calc(12px + env(safe-area-inset-top, 0px)) 32px; display:flex; flex-direction:column; gap:14px; }
+body.has-bar .wrap { padding-bottom:calc(var(--bar-h) + 40px + env(safe-area-inset-bottom, 0px)); }
+
+.top { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:48px; }
+.brand { display:flex; flex-direction:column; line-height:1.2; }
+.brand small { font-family:var(--mono); font-size:11px; letter-spacing:.22em; color:var(--muted); }
+.brand b { font-family:var(--display); font-weight:900; font-size:20px; }
+.icon-btn { width:48px; height:48px; border-radius:14px; border:1px solid var(--line); background:var(--surface); color:var(--fg); display:grid; place-items:center; cursor:pointer; }
+.icon-btn svg { width:22px; height:22px; }
+
+.card { background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:18px; display:flex; flex-direction:column; gap:12px; }
+.card.accent { border:2px solid var(--ink); }
+h1, h2 { font-family:var(--display); margin:0; text-wrap:balance; word-break:keep-all; overflow-wrap:anywhere; }
+h2 { font-size:19px; line-height:1.4; }
+p { margin:0; }
+.muted { color:var(--muted); }
+.small { font-size:14px; }
+button { font:inherit; cursor:pointer; }
+button:focus-visible, input:focus-visible, summary:focus-visible, textarea:focus-visible, a:focus-visible { outline:3px solid var(--ink); outline-offset:2px; }
+.btn { min-height:48px; padding:10px 16px; border-radius:14px; border:1px solid var(--line); background:var(--surface); color:var(--fg); font-weight:700; }
+.btn-primary { background:var(--ink); border-color:var(--ink); color:var(--on-ink); }
+.btn-danger { background:var(--danger); border-color:var(--danger); color:#fff; }
+.btn-text { background:none; border:none; color:var(--ink); font-weight:700; min-height:44px; padding:8px 10px; }
+.btn-big { min-height:60px; border-radius:20px; font-family:var(--display); font-weight:900; font-size:19px; }
+.choice { width:100%; min-height:60px; text-align:left; padding:10px 16px; border-radius:16px; border:1px solid var(--line); background:var(--bg); color:var(--fg); display:flex; flex-direction:column; justify-content:center; }
+.choice b { font-size:16px; }
+.choice span { font-size:13px; color:var(--muted); }
+.choice.primary { background:var(--ink); border-color:var(--ink); color:var(--on-ink); }
+.choice.primary span { color:var(--on-ink); opacity:.85; }
+.tip { display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border-radius:14px; background:var(--ink-soft); font-size:14px; line-height:1.6; }
+.tip svg { width:20px; height:20px; flex:none; margin-top:2px; }
+
+/* 計画づくり */
+.intro h1 { font-size:clamp(28px, 8vw, 34px); line-height:1.25; }
+.step { display:flex; align-items:baseline; gap:10px; }
+.step .no { font-family:var(--display); font-weight:900; font-size:22px; color:var(--ink); }
+.step label { font-weight:700; }
+.hint { font-size:13px; color:var(--muted); font-weight:400; }
+input[type="text"], input[type="date"], textarea { font:inherit; color:var(--fg); background:var(--bg); border:1.5px solid var(--line); border-radius:14px; padding:12px 14px; min-height:52px; width:100%; }
+textarea { min-height:96px; font-family:var(--mono); font-size:13px; }
+.chips { display:flex; gap:8px; overflow-x:auto; padding:2px 2px 4px; margin-inline:-2px; scrollbar-width:none; }
+.chips::-webkit-scrollbar { display:none; }
+.chip { flex:none; min-height:40px; padding:6px 14px; border-radius:999px; border:1px solid var(--line); background:var(--bg); color:var(--fg); font-size:14px; font-weight:500; white-space:nowrap; }
+.chip[aria-pressed="true"] { border-color:var(--ink); background:var(--ink-soft); color:var(--ink-strong); font-weight:700; }
+.recipe { font-family:var(--display); font-weight:700; font-size:20px; line-height:1.5; }
+.recipe .cue, .recipe .ph { color:var(--ink); }
+.recipe .ph { opacity:.55; }
+details.more summary { cursor:pointer; color:var(--ink); font-weight:700; min-height:44px; display:flex; align-items:center; list-style:none; }
+details.more summary::-webkit-details-marker { display:none; }
+.form-actions { display:flex; gap:10px; }
+.form-actions .btn { flex:1; }
+.err { color:var(--danger); font-size:14px; font-weight:700; }
+
+/* 今日の画面 */
+.plan-cue { font-family:var(--display); font-weight:900; font-size:clamp(26px, 7.6vw, 30px); line-height:1.3; color:var(--ink); }
+.plan-act { display:flex; align-items:center; gap:8px; font-family:var(--display); font-weight:700; font-size:22px; line-height:1.4; }
+.plan-act svg { width:22px; height:22px; flex:none; color:var(--muted); }
+.label { font-size:13px; font-weight:700; color:var(--muted); }
+.status { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; }
+.total { font-family:var(--display); font-weight:900; font-size:56px; line-height:.9; font-variant-numeric:tabular-nums; }
+.total small { font-size:20px; color:var(--muted); font-weight:700; margin-left:4px; }
+.daytag { text-align:right; color:var(--muted); font-size:14px; line-height:1.4; }
+.daytag b { display:block; color:var(--fg); font-size:18px; }
+.hero-split { border:none; border-top:1px solid var(--line); margin:4px 0 0; }
+.auto { display:grid; grid-template-columns:auto 1fr; align-items:center; gap:4px 14px; padding:12px 14px; border-radius:14px; background:var(--ink-soft); }
+.auto .v { font-family:var(--display); font-weight:900; font-size:28px; line-height:1; font-variant-numeric:tabular-nums; }
+.auto .v small { font-size:14px; color:var(--muted); font-weight:700; margin-left:2px; }
+.auto .k { grid-column:1 / -1; font-size:13px; font-weight:700; color:var(--muted); }
+.auto svg { width:100%; height:36px; }
+.auto .trend { grid-column:1 / -1; font-size:13px; color:var(--muted); }
+.msg { font-size:15px; line-height:1.6; display:flex; gap:8px; align-items:flex-start; }
+.msg::before { content:""; flex:none; width:6px; height:6px; border-radius:50%; background:var(--ink); margin-top:.6em; }
+.msg-box { padding:12px 14px; border-radius:14px; background:var(--ink-soft); font-size:15px; line-height:1.6; }
+
+.scale { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:6px; }
+.scale button { min-height:56px; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); color:var(--fg); font-family:var(--display); font-weight:900; font-size:22px; }
+.scale button[aria-checked="true"] { background:var(--ink); border-color:var(--ink); color:var(--on-ink); }
+.scale-ends { display:flex; justify-content:space-between; gap:12px; font-size:13px; color:var(--muted); }
+
+.backfill { display:grid; grid-template-columns:repeat(auto-fill, minmax(64px, 1fr)); gap:8px; }
+.backfill button { min-height:64px; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); color:var(--fg); display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.3; }
+.backfill button b { font-family:var(--mono); font-weight:400; font-size:15px; }
+.backfill button span { font-size:11px; color:var(--muted); }
+.backfill button[aria-pressed="true"] { background:var(--ink); border-color:var(--ink); color:var(--on-ink); }
+.backfill button[aria-pressed="true"] span { color:var(--on-ink); }
+
+.stat2 { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px; }
+.stat2 b { display:block; font-family:var(--display); font-weight:900; font-size:40px; line-height:1; }
+.stat2 b small { font-size:16px; color:var(--muted); margin-left:4px; }
+
+.grid-card { padding:14px 12px; }
+.grid-head { display:flex; justify-content:space-between; align-items:baseline; gap:8px; padding:0 4px; }
+.grid { display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:4px; }
+.cell { aspect-ratio:1 / 1; min-width:0; max-width:100%; padding:0; border-radius:12px; border:1.5px solid var(--line); background:transparent; color:var(--muted); font-family:var(--mono); font-size:13px; display:grid; place-items:center; position:relative; }
 .cell.done { background:var(--ink); border-color:var(--ink); color:var(--on-ink); }
-.cell.today { border-color:var(--ink); border-width:2.5px; }
-.cell.future { opacity:.45; cursor:default; }
-.cell.mark:not(.done) { background:var(--ink-soft); }
-.legend { display:flex; gap:14px; flex-wrap:wrap; font-size:13px; color:var(--muted); }
-.rules { display:flex; flex-direction:column; gap:10px; margin:0; padding:0; list-style:none; counter-reset:r; }
-.rules li { display:grid; grid-template-columns:28px 1fr; gap:6px; }
+.cell.today { border:3px solid var(--ink); color:var(--fg); font-weight:700; }
+.cell.today.done { color:var(--on-ink); }
+.cell.future { opacity:.4; cursor:default; border-style:dashed; }
+.cell.milestone::after { content:""; position:absolute; top:4px; right:4px; width:6px; height:6px; border-radius:50%; background:var(--ink); }
+.cell.milestone.done::after { background:var(--on-ink); }
+.cell.pop { animation:pop .32s ease; }
+@keyframes pop { 0%{transform:scale(1)} 40%{transform:scale(1.12)} 100%{transform:scale(1)} }
+.legend { display:flex; gap:4px 14px; flex-wrap:wrap; font-size:13px; color:var(--muted); padding:0 4px; }
+
+details.tips summary { cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center; min-height:44px; font-family:var(--display); font-weight:700; font-size:18px; }
+details.tips summary::-webkit-details-marker { display:none; }
+details.tips summary svg { width:20px; height:20px; transition:transform .2s; flex:none; }
+details.tips[open] summary svg { transform:rotate(180deg); }
+.rules { list-style:none; margin:4px 0 0; padding:0; display:flex; flex-direction:column; gap:12px; counter-reset:r; }
+.rules li { display:grid; grid-template-columns:30px 1fr; gap:4px; }
 .rules li::before { counter-increment:r; content:counter(r); font-family:var(--display); font-weight:900; font-size:22px; color:var(--ink); line-height:1.3; }
 .rules b { display:block; }
 .rules span { color:var(--muted); font-size:14px; }
-.actions { display:flex; gap:10px; flex-wrap:wrap; }
-.actions button { flex:1 1 140px; }
-.confirm { border:1px solid var(--ink); }
-footer { font-size:12px; color:var(--muted); display:flex; flex-direction:column; gap:6px; }
-footer a { color:var(--ink); }
+
+.notice { display:flex; gap:12px; align-items:flex-start; border:1px solid var(--ink); background:var(--surface); border-radius:16px; padding:14px; }
+.notice p { flex:1; font-size:14px; }
+.notice b { display:block; font-size:15px; }
+
+footer { font-size:12px; color:var(--muted); display:flex; flex-direction:column; gap:6px; padding-top:4px; }
+
+.bar { position:fixed; left:0; right:0; bottom:0; padding:12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); background:var(--bg); border-top:1px solid var(--line); z-index:10; }
+.bar-inner { max-width:488px; margin:0 auto; }
+.today-btn { width:100%; min-height:68px; border-radius:20px; border:2px solid var(--ink); background:var(--ink); color:var(--on-ink); font-family:var(--display); font-weight:900; font-size:21px; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:var(--shadow); }
+.today-btn svg { width:26px; height:26px; flex:none; }
+.today-btn[aria-pressed="true"] { background:var(--surface); color:var(--ink-strong); }
+.today-sub { text-align:center; font-size:12px; color:var(--muted); margin-top:6px; min-height:18px; }
+
+.toast { position:fixed; left:16px; right:16px; bottom:calc(var(--bar-h) + 28px + env(safe-area-inset-bottom, 0px)); max-width:488px; margin:0 auto; background:var(--fg); color:var(--bg); border-radius:14px; padding:6px 6px 6px 16px; min-height:52px; display:flex; align-items:center; justify-content:space-between; gap:12px; box-shadow:var(--shadow); z-index:20; font-size:15px; }
+.toast .btn-text { color:var(--bg); text-decoration:underline; }
+body:not(.has-bar) .toast { bottom:calc(20px + env(safe-area-inset-bottom, 0px)); }
+
+dialog { border:none; border-radius:24px 24px 0 0; padding:0; width:100%; max-width:520px; margin:auto auto 0; background:var(--surface); color:var(--fg); max-height:85vh; }
+dialog::backdrop { background:rgba(15,23,36,.45); }
+.sheet { padding:18px 16px calc(18px + env(safe-area-inset-bottom, 0px)); display:flex; flex-direction:column; gap:8px; }
+.sheet h2 { font-size:18px; padding:4px 4px 8px; }
+.sheet .item { width:100%; text-align:left; min-height:56px; padding:12px 14px; border-radius:14px; border:none; background:transparent; color:var(--fg); font-weight:700; display:flex; flex-direction:column; justify-content:center; }
+.sheet .item small { font-weight:400; color:var(--muted); font-size:13px; }
+.sheet .item:hover { background:var(--bg); }
+.sheet .item.danger { color:var(--danger); }
+
 @media print {
+  .bar, .top button, .toast, .notice, footer, .no-print, details.tips summary svg { display:none !important; }
   body { background:#fff; color:#000; }
-  .noprint { display:none !important; }
-  .panel { border-color:#bbb; break-inside:avoid; }
-  .cell.future { opacity:1; }
+  .wrap { padding:0; }
+  .card { border-color:#999; break-inside:avoid; }
+  .cell.future { opacity:1; border-style:solid; }
 }
-@media (prefers-reduced-motion: no-preference) { .cell { transition:background-color .15s; } }
+@media (prefers-reduced-motion: reduce) { * { animation:none !important; transition:none !important; } }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <div class="brand">TSUZUKU LAB</div>
-    <h1>66日チェック表</h1>
-    <p class="lead">数えるのは、<b>連続</b>じゃなく<b>合計</b>。</p>
-  </header>
 
-  <!-- はじめの設定 -->
-  <form class="panel" id="setup" hidden>
-    <label for="habit">わたしの習慣<small>1つだけ・小さく（例：腕立てを5回する）</small><input id="habit" required maxlength="40" placeholder="腕立てを5回する"></label>
-    <label for="cue">きっかけ<small>毎日かならずやることにくっつける（例：朝コーヒーをいれたら）</small><input id="cue" required maxlength="40" placeholder="朝コーヒーをいれたら"></label>
-    <div class="row2">
-      <label for="time">時間帯<small>できれば朝</small>
-        <select id="time"><option>朝</option><option>昼</option><option>夜</option></select>
-      </label>
-      <label for="start">はじめた日<small>&nbsp;</small><input id="start" type="date" required></label>
+  <div class="top">
+    <div class="brand"><small>TSUZUKU LAB</small><b>66日チェック表</b></div>
+    <button class="icon-btn" id="menuBtn" type="button" aria-label="メニュー" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+  </div>
+
+  <!-- 計画づくり（変更にも使う）：いつ？ → 何を？ の順 -->
+  <form class="card intro" id="setup" hidden novalidate>
+    <h1 id="setupTitle">何を、<wbr>66日<wbr>続けますか？</h1>
+    <p class="muted" id="setupLead">先に「いつ」、次に「何を」。通知はなく、毎日のきっかけが合図です。</p>
+
+    <div class="step"><span class="no">1</span><label for="cue">いつ？<span class="hint">　毎日かならずすることのあと</span></label></div>
+    <input type="text" id="cue" maxlength="30" autocomplete="off" placeholder="例：朝コーヒーをいれたら" enterkeyhint="next">
+    <div class="chips" data-for="cue" role="group" aria-label="きっかけの例">
+      <button type="button" class="chip">朝コーヒーをいれたら</button>
+      <button type="button" class="chip">歯をみがいたら</button>
+      <button type="button" class="chip">電車に乗ったら</button>
+      <button type="button" class="chip">昼ごはんのあと</button>
+      <button type="button" class="chip">お風呂から出たら</button>
+      <button type="button" class="chip">布団に入ったら</button>
     </div>
-    <button class="primary" type="submit">66日をはじめる</button>
+
+    <div class="step"><span class="no">2</span><label for="habit">何を？<span class="hint">　30秒でできる大きさに</span></label></div>
+    <input type="text" id="habit" maxlength="30" autocomplete="off" placeholder="例：腕立てを5回する" enterkeyhint="done">
+    <div class="chips" data-for="habit" role="group" aria-label="やることの例">
+      <button type="button" class="chip">水を1杯飲む</button>
+      <button type="button" class="chip">腕立てを5回する</button>
+      <button type="button" class="chip">本を1ページ読む</button>
+      <button type="button" class="chip">英単語を5個覚える</button>
+      <button type="button" class="chip">ストレッチを1分する</button>
+      <button type="button" class="chip">日記を1行書く</button>
+    </div>
+    <div class="tip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="color:var(--ink)"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.5"/></svg>
+      <span>もっと小さくできますか？「腕立て1回」でもOK。かんたんな行動ほど、朝にやるほど、早く身につきます。</span>
+    </div>
+
+    <div class="card accent" style="padding:16px; gap:4px">
+      <span class="label">あなたの計画</span>
+      <p class="recipe" id="recipe" aria-live="polite"></p>
+    </div>
+
+    <details class="more" id="startMore">
+      <summary>はじめた日を変える（今日以外から始めた人）</summary>
+      <input type="date" id="start" aria-label="はじめた日">
+    </details>
+
+    <p class="err" id="setupErr" role="alert" hidden></p>
+    <div class="form-actions">
+      <button type="button" class="btn" id="setupCancel" hidden>やめる</button>
+      <button type="submit" class="btn btn-primary btn-big" id="setupSubmit">66日をはじめる</button>
+    </div>
   </form>
 
-  <!-- 記録の画面 -->
-  <section id="main" hidden style="display:flex; flex-direction:column; gap:20px">
-    <div class="panel">
-      <div class="plan" id="plan"></div>
-      <button class="primary noprint" id="todayBtn" type="button" aria-pressed="false">今日の〇をつける</button>
-      <div class="stats">
-        <div class="total" id="total">0<small> / 66</small></div>
-        <div class="day" id="dayInfo"></div>
+  <!-- 今日の画面 -->
+  <section id="main" hidden style="display:flex; flex-direction:column; gap:14px">
+
+    <!-- 何日か空いたとき -->
+    <div class="card accent" id="returnCard" hidden>
+      <h2 style="font-size:26px">おかえりなさい</h2>
+      <p id="returnText"></p>
+      <p class="small muted">記録を忘れていただけなら、さかのぼって〇をつけられます。やっていない日は空白のままでOK。</p>
+      <div class="backfill" id="backfill"></div>
+      <button type="button" class="choice" id="lighterBtn"><b>計画を軽くする</b><span>行動を小さくする・きっかけを変える</span></button>
+      <button type="button" class="btn-text" id="returnClose" style="align-self:flex-end">閉じる</button>
+    </div>
+
+    <!-- 66日を終えたとき -->
+    <div class="card accent" id="finishCard" hidden>
+      <span class="label">DAY 66</span>
+      <h2 style="font-size:28px">66日、<wbr>おつかれさまでした</h2>
+      <div class="stat2">
+        <div><span class="label">〇がついた日</span><b id="finTotal">0<small>/ 66日</small></b></div>
+        <div id="finAutoBox"><span class="label">考えずにできた度</span><b id="finAuto">-<small>/ 5</small></b></div>
       </div>
-      <p class="msg" id="msg"></p>
+      <p class="msg-box">考えずにできるようになっていたら、それが習慣です。まだでも大丈夫。研究では、人によって254日かかることもあります。</p>
+      <button type="button" class="choice primary" id="againBtn"><b>この習慣で、もう66日</b><span>今回の結果は残して、新しいマス目で続けます</span></button>
+      <button type="button" class="choice" id="nextBtn"><b>新しい習慣を、もう1つ始める</b><span>今の習慣をきっかけにすると、つなげやすい</span></button>
     </div>
 
-    <div class="panel">
-      <div class="grid" id="grid" role="group" aria-label="66日のマス目。過ぎた日はタップで〇をつけたり外したりできる"></div>
-      <div class="legend"><span>枠が太い：今日</span><span>空白：抜けた日（それでOK）</span><span>マスをタップ：〇をつける・外す</span></div>
+    <div class="card" id="heroCard">
+      <span class="label">きっかけが来たら</span>
+      <p class="plan-cue" id="planCue"></p>
+      <p class="plan-act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span id="planAct"></span></p>
+      <div id="statusPart" style="display:flex; flex-direction:column; gap:12px">
+        <hr class="hero-split">
+        <div class="status">
+          <div class="total" id="total" aria-live="polite">0<small>/ 66日</small></div>
+          <div class="daytag" id="daytag"></div>
+        </div>
+        <div class="auto" id="autoBox" hidden>
+          <span class="k">考えずにできた度（週1回の記録）</span>
+          <span class="v" id="autoNow">-<small>/ 5</small></span>
+          <svg id="autoSvg" viewBox="0 0 200 36" preserveAspectRatio="xMinYMid meet" aria-hidden="true"></svg>
+          <span class="trend" id="autoTrend"></span>
+        </div>
+        <p class="msg" id="msg" aria-live="polite"></p>
+      </div>
     </div>
 
-    <div class="panel">
+    <!-- 週1回のふり返り -->
+    <div class="card" id="weekCard" hidden>
+      <span class="label" id="weekLabel"></span>
+      <h2 id="weekQ"></h2>
+      <div class="scale" role="radiogroup" aria-labelledby="weekQ" id="scale">
+        <button type="button" role="radio" aria-checked="false" data-v="1">1</button>
+        <button type="button" role="radio" aria-checked="false" data-v="2">2</button>
+        <button type="button" role="radio" aria-checked="false" data-v="3">3</button>
+        <button type="button" role="radio" aria-checked="false" data-v="4">4</button>
+        <button type="button" role="radio" aria-checked="false" data-v="5">5</button>
+      </div>
+      <div class="scale-ends"><span>毎回、思い出してやった</span><span>気づいたらやっていた</span></div>
+      <p class="small muted">週に1回だけ聞きます。〇の数より、この「考えずにできた度」が、習慣になったかの目安です。</p>
+      <button type="button" class="btn-text" id="weekSkip" style="align-self:flex-end">今週はとばす</button>
+    </div>
+
+    <div class="notice" id="homeNotice" hidden>
+      <p><b>ホーム画面に追加しておくと安心です</b>iPhoneのSafariは、しばらく開かないサイトの記録を消すことがあります。共有ボタン →「ホーム画面に追加」で、アプリのように使えます。</p>
+      <button type="button" class="btn-text" id="homeNoticeClose">閉じる</button>
+    </div>
+
+    <div class="card grid-card">
+      <div class="grid-head"><h2 style="font-size:18px">66日のマス</h2><span class="small muted">1行＝1週間</span></div>
+      <div class="grid" id="grid" role="group" aria-label="66日のマス目。過ぎた日はタップで〇をつけたり外したりできます"></div>
+      <div class="legend"><span>塗り：できた日</span><span>太枠：今日</span><span>空白：それでOK</span><span>右上の点：21日・66日</span></div>
+    </div>
+
+    <details class="card tips">
+      <summary>続けるための3つのコツ<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
       <ol class="rules">
         <li><div><b>1つだけ、小さく。自分で選んだものを。</b><span>かんたんな行動ほど早く身につく。運動は、食べる・飲む習慣より約1.5倍かかった。</span></div></li>
-        <li><div><b>「〇〇したら△△する」。できれば朝に。</b><span>同じストレッチでも、朝は約106日、夜は約154日で習慣になった。</span></div></li>
+        <li><div><b>「〇〇したら、すぐ△△する」。できれば朝に。</b><span>同じストレッチでも、朝は約106日、夜は約154日で習慣になった。</span></div></li>
         <li><div><b>1日抜けても、リセットしない。</b><span>1日サボっても、習慣づくりにはほとんど影響しなかった。</span></div></li>
       </ol>
-    </div>
-
-    <div class="actions noprint">
-      <button type="button" id="printBtn">印刷する</button>
-      <button type="button" id="resetBtn">新しく始める</button>
-    </div>
-    <div class="panel confirm noprint" id="confirmBox" hidden>
-      <p style="margin:0">いまの記録を消して、新しく始めますか？ 消した記録は戻せません。</p>
-      <div class="actions">
-        <button type="button" id="confirmYes">消して始める</button>
-        <button type="button" id="confirmNo">やめる</button>
-      </div>
-    </div>
+    </details>
   </section>
 
   <footer>
-    <p style="margin:0">記録は、この端末のブラウザの中にだけ保存されます。どこにも送られません。ブラウザのデータを消すと記録も消えます。</p>
-    <p style="margin:0">習慣になるまでの日数は人によって大きくちがいます（研究では18日〜254日）。66日は目安です。</p>
-    <p style="margin:0">参考：Lally et al. (2010) European Journal of Social Psychology／Fournier et al. (2017) Health Psychology／Singh et al. (2024) Healthcare 12(23), 2488</p>
-    <p style="margin:0">つくった人：つづくラボ（研究でわかった、続く仕組み。）</p>
+    <p>記録は、この端末のブラウザの中にだけ保存されます。どこにも送られません。通知もありません。</p>
+    <p>習慣になるまでの日数は人によって大きくちがいます（研究では18日〜254日）。66日は目安です。</p>
+    <p>参考：Lally et al. (2010)／Fournier et al. (2017)／Singh et al. (2024)／Stawarz et al. (2015)</p>
+    <p>つくった人：つづくラボ（研究でわかった、続く仕組み。）</p>
   </footer>
 </div>
 
+<div class="bar" id="bar" hidden>
+  <div class="bar-inner">
+    <button type="button" class="today-btn" id="todayBtn" aria-pressed="false"></button>
+    <div class="today-sub" id="todaySub"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" hidden><span id="toastText"></span><button type="button" class="btn-text" id="toastUndo">元に戻す</button></div>
+
+<dialog id="menu" aria-labelledby="menuTitle">
+  <div class="sheet" id="menuMain">
+    <h2 id="menuTitle">メニュー</h2>
+    <button type="button" class="item" id="mEdit">計画を変える<small>きっかけ・やることを直せます。これまでの〇はそのまま</small></button>
+    <button type="button" class="item" id="mBackup">記録をバックアップする<small>文字のかたまりをコピーして、メモ帳などに貼っておく</small></button>
+    <button type="button" class="item" id="mRestore">バックアップから戻す<small>機種変更したときや、記録が消えたときに</small></button>
+    <button type="button" class="item" id="mPrint">印刷する<small>紙のチェック表としても使えます</small></button>
+    <button type="button" class="item danger" id="mReset">記録を消して、新しく始める</button>
+    <button type="button" class="btn" id="mClose">閉じる</button>
+  </div>
+  <div class="sheet" id="menuBackup" hidden>
+    <h2>記録のバックアップ</h2>
+    <textarea id="backupText" readonly aria-label="バックアップの文字"></textarea>
+    <p id="backupMsg" class="small muted">この文字をコピーして、メモ帳などに貼っておいてください。</p>
+    <div class="form-actions"><button type="button" class="btn" data-back>もどる</button><button type="button" class="btn btn-primary" id="copyBtn">コピーする</button></div>
+  </div>
+  <div class="sheet" id="menuRestore" hidden>
+    <h2>バックアップから戻す</h2>
+    <textarea id="restoreText" aria-label="バックアップの文字を貼り付ける" placeholder="ここにバックアップの文字を貼り付け"></textarea>
+    <p class="err" id="restoreErr" role="alert" hidden></p>
+    <div class="form-actions"><button type="button" class="btn" data-back>もどる</button><button type="button" class="btn btn-primary" id="restoreBtn">この記録に戻す</button></div>
+  </div>
+  <div class="sheet" id="menuReset" hidden>
+    <h2>記録を消しますか？</h2>
+    <p>いまの〇がすべて消えます。消した記録は戻せません。心配なら、先にバックアップしてください。</p>
+    <div class="form-actions"><button type="button" class="btn" data-back>やめる</button><button type="button" class="btn btn-danger" id="resetYes">消して始める</button></div>
+  </div>
+</dialog>
+
 <script>
 (function () {
-  var KEY = 'tsuzuku-66days-v1';
-  var DAYS = 66;
+  var KEY = 'tsuzuku-66days-v1', DAYS = 66, WEEKS = Math.ceil(DAYS / 7);
   var $ = function (id) { return document.getElementById(id); };
+  var CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  var CIRCLE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><circle cx="12" cy="12" r="8"/></svg>';
 
-  function load() { try { return JSON.parse(localStorage.getItem(KEY)) || null; } catch (e) { return null; } }
-  function save(s) { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* 保存できない環境でも画面は動かす */ } }
-
-  function ymd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
-  function parseYmd(s) { var p = s.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
-  // はじめた日を1日目として、今日が何日目か（端末の日付で数える）
-  function dayIndex(start) {
-    var a = parseYmd(start), t = new Date(); t = new Date(t.getFullYear(), t.getMonth(), t.getDate());
-    return Math.round((t - a) / 86400000) + 1;
+  // ---- 保存（使えない環境でも画面は動かす）----
+  function load() {
+    try {
+      var s = JSON.parse(localStorage.getItem(KEY));
+      if (!s) return null;
+      s.done = Array.isArray(s.done) ? s.done : [];
+      s.auto = s.auto && typeof s.auto === 'object' ? s.auto : {};
+      s.history = Array.isArray(s.history) ? s.history : [];
+      return s;
+    } catch (e) { return null; }
   }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+  }
+
+  // ---- 日付：端末の日付で、はじめた日を1日目として数える ----
+  function ymd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function parseYmd(s) { var p = String(s).split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
+  function todayYmd() { return ymd(new Date()); }
+  function todayIndex() { var a = parseYmd(state.start), t = new Date(); t = new Date(t.getFullYear(), t.getMonth(), t.getDate()); return Math.round((t - a) / 86400000) + 1; }
+  function dateOf(day, short) { var d = parseYmd(state.start); d.setDate(d.getDate() + day - 1); return short ? (d.getMonth() + 1) + '/' + d.getDate() : (d.getMonth() + 1) + '月' + d.getDate() + '日'; }
+  function has(d) { return state.done.indexOf(d) >= 0; }
+  function scores() { var out = []; for (var w = 1; w <= WEEKS; w++) { var v = Number(state.auto[w]); if (v >= 1 && v <= 5) out.push({ w: w, v: v }); } return out; }
 
   var state = load();
+  var editing = false, lastAction = null, toastTimer = null;
 
-  function showSetup() {
-    $('main').hidden = true; $('setup').hidden = false;
-    $('start').value = ymd(new Date());
+  // ---- 計画づくり ----
+  function updateRecipe() {
+    var h = $('habit').value.trim(), c = $('cue').value.trim();
+    var r = $('recipe'); r.textContent = '';
+    var a = document.createElement('span'); a.className = c ? 'cue' : 'ph'; a.textContent = c || '〇〇したら';
+    var b = document.createElement('span'); b.textContent = h || '△△する'; if (!h) b.className = 'ph';
+    r.append(a, '、すぐ', b, '。');
+    document.querySelectorAll('.chips').forEach(function (g) {
+      var v = $(g.dataset.for).value.trim();
+      g.querySelectorAll('.chip').forEach(function (ch) { ch.setAttribute('aria-pressed', ch.textContent === v ? 'true' : 'false'); });
+    });
   }
+  function openSetup(mode) { // mode: 'new' | 'edit'
+    editing = mode === 'edit';
+    hideMain(); $('setup').hidden = false; $('setupErr').hidden = true;
+    $('setupTitle').innerHTML = editing ? '計画を<wbr>変える' : '何を、<wbr>66日<wbr>続けますか？';
+    $('setupLead').textContent = editing ? 'これまでの〇はそのまま残ります。続けにくかったら、行動を小さくするか、毎日かならずあるきっかけに変えてみてください。' : '先に「いつ」、次に「何を」。通知はなく、毎日のきっかけが合図です。';
+    $('setupSubmit').textContent = editing ? '保存する' : '66日をはじめる';
+    $('setupCancel').hidden = !state;
+    $('cue').value = editing ? state.cue : '';
+    $('habit').value = editing ? state.habit : '';
+    $('start').value = editing ? state.start : todayYmd();
+    $('startMore').open = false; $('startMore').hidden = false;
+    updateRecipe(); window.scrollTo(0, 0);
+  }
+  function hideMain() { $('main').hidden = true; $('bar').hidden = true; $('toast').hidden = true; document.body.classList.remove('has-bar'); $('menuBtn').hidden = true; }
 
-  function message(today, done) {
-    var n = done.length;
-    if (today < 1) return 'はじめる日を待っています。';
-    if (today > DAYS) return '66日が終わりました。合計 ' + n + ' 日。考えなくてもできるようになっていたら、それが習慣です。';
-    var yesterday = today - 1;
-    if (done.indexOf(today) < 0 && yesterday >= 1 && done.indexOf(yesterday) < 0) return '昨日は空白。でも大丈夫。1日抜けても、積み上げは消えません。今日の1回から再開しよう。';
-    if (done.indexOf(today) >= 0 && today !== 21) return '今日の〇がつきました。合計 ' + n + ' 日。';
-    if (today === 21) return '21日目。「21日で習慣になる」と言われることがあるけれど、研究ではまだ途中。ここからが本番。';
-    if (today === 1) return '1日目。まずは今日の1回だけ。';
-    return '今日の1回で、合計 ' + (n + 1) + ' 日になります。';
+  // ---- 今日の画面 ----
+  function message(t) {
+    var n = state.done.length;
+    if (t < 1) return 'はじめる日（' + dateOf(1) + '）を待っています。';
+    var y = t - 1;
+    if (has(t)) {
+      if (t === 21) return '21日目の〇。「21日で習慣になる」と言われることがあるけれど、研究ではまだ途中。ここからが本番。';
+      if (n === 1) return '最初の〇がつきました。今日はこれで十分です。';
+      if (n % 10 === 0) return '合計 ' + n + ' 日。積み上げが形になってきました。';
+      return '今日の〇がつきました。合計 ' + n + ' 日。また明日。';
+    }
+    if (y >= 1 && !has(y)) return '昨日は空白。でも大丈夫。空いた日は、あとから〇をつけ直せます。';
+    if (t === 21) return '21日目。研究では、習慣になるのはまだ先。ここからが本番。';
+    if (t === 1) return '1日目。まずは今日の1回だけ。';
+    return 'きっかけが来たら、今日の1回を。';
   }
+  function missedRun(t) { // 今日より前で、続けて空いている日（最大7日）
+    var list = [];
+    for (var d = Math.min(t, DAYS + 1) - 1; d >= 1 && list.length < 7; d--) { if (has(d)) break; list.unshift(d); }
+    return list;
+  }
+  function weekToAsk(t) { // 今日で終わる週、または終わった週のうち、いちばん新しい週。答えたかとばしたら聞かない
+    var w = t >= DAYS ? WEEKS : Math.floor(t / 7);
+    if (w < 1) return 0;
+    return state.auto[w] === undefined ? w : 0;
+  }
+  function drawSpark(list) {
+    var svg = $('autoSvg'); svg.innerHTML = '';
+    var ns = 'http://www.w3.org/2000/svg';
+    var base = document.createElementNS(ns, 'line');
+    base.setAttribute('x1', 0); base.setAttribute('x2', 200); base.setAttribute('y1', 35); base.setAttribute('y2', 35); base.setAttribute('stroke', 'var(--muted)'); base.setAttribute('stroke-opacity', '.4'); base.setAttribute('vector-effect', 'non-scaling-stroke');
+    svg.appendChild(base);
+    var pts = list.map(function (s) { return [6 + (s.w - 1) * (188 / (WEEKS - 1)), 32 - (s.v - 1) * 7]; });
+    if (pts.length > 1) {
+      var pl = document.createElementNS(ns, 'polyline');
+      pl.setAttribute('points', pts.map(function (p) { return p.join(','); }).join(' '));
+      pl.setAttribute('fill', 'none'); pl.setAttribute('stroke', 'var(--ink)'); pl.setAttribute('stroke-width', '2.5'); pl.setAttribute('stroke-linecap', 'round'); pl.setAttribute('stroke-linejoin', 'round'); pl.setAttribute('vector-effect', 'non-scaling-stroke');
+      svg.appendChild(pl);
+    }
+    pts.forEach(function (p, i) {
+      var c = document.createElementNS(ns, 'circle');
+      c.setAttribute('cx', p[0]); c.setAttribute('cy', p[1]); c.setAttribute('r', i === pts.length - 1 ? 4.5 : 3.5); c.setAttribute('fill', 'var(--ink)');
+      svg.appendChild(c);
+    });
+  }
+  function isStandalone() { return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; }
+  function isIOS() { return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
 
   function render() {
-    if (!state) { showSetup(); return; }
-    $('setup').hidden = true; $('main').hidden = false;
-    var today = dayIndex(state.start);
-    var done = state.done;
-    var plan = $('plan');
-    plan.textContent = '';
-    var a = document.createElement('span'); a.textContent = state.cue;
-    var b = document.createElement('span'); b.textContent = state.habit;
-    plan.append(a, '、', b, '。（', state.time, '）');
+    if (!state) { openSetup('new'); return; }
+    $('setup').hidden = true; $('main').hidden = false; $('menuBtn').hidden = false;
+    var t = todayIndex(), n = state.done.length, inRange = t >= 1 && t <= DAYS, finished = t > DAYS;
+    $('bar').hidden = !inRange; document.body.classList.toggle('has-bar', inRange);
 
-    var inRange = today >= 1 && today <= DAYS;
-    var btn = $('todayBtn');
-    btn.disabled = !inRange;
-    var on = inRange && done.indexOf(today) >= 0;
+    $('planCue').textContent = state.cue;
+    $('planAct').textContent = state.habit;
+
+    $('total').firstChild.nodeValue = String(n);
+    var dt = $('daytag'); dt.textContent = '';
+    var b = document.createElement('b'), s = document.createElement('span');
+    if (t < 1) { b.textContent = 'まだ始まっていません'; s.textContent = dateOf(1) + 'から'; }
+    else if (finished) { b.textContent = '66日が終了'; }
+    else { b.textContent = t + '日目'; s.textContent = 'のこり ' + (DAYS - t) + ' 日'; }
+    dt.append(b, s);
+    $('msg').textContent = finished ? '66日、おつかれさまでした。' : message(t);
+
+    // 考えずにできた度
+    var sc = scores();
+    $('autoBox').hidden = sc.length === 0;
+    if (sc.length) {
+      drawSpark(sc);
+      var last = sc[sc.length - 1];
+      $('autoNow').firstChild.nodeValue = String(last.v);
+      $('autoTrend').textContent = sc.length > 1 ? '第' + sc[0].w + '週 ' + sc[0].v + ' → 第' + last.w + '週 ' + last.v : '第' + last.w + '週の記録。5が満点';
+    }
+
+    // 何日か空いたとき（2日以上、今日はまだ）。お願いは一度に1つだけ：空いた日 ＞ 週のふり返り
+    var miss = inRange && !has(t) ? missedRun(t) : [];
+    var showReturn = miss.length >= 2 && state.returnClosed !== todayYmd();
+
+    // 週1回のふり返り
+    var w = (inRange || finished) && !showReturn ? weekToAsk(t) : 0;
+    $('weekCard').hidden = !w;
+    if (w) {
+      var end = Math.min(7 * w, DAYS);
+      $('weekLabel').textContent = '第' + w + '週のふり返り（' + (7 * w - 6) + '〜' + end + '日目）';
+      $('weekQ').textContent = '「' + state.habit + '」、考えずに体が動いた？';
+      $('weekCard').dataset.week = w;
+      $('scale').querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-checked', 'false'); });
+    }
+
+    $('returnCard').hidden = !showReturn;
+    if (showReturn) {
+      $('returnText').textContent = miss.length + '日あきました。忙しい日は、だれにでもあります。これまでの' + n + '日分の〇は、そのまま残っています。';
+      var bf = $('backfill'); bf.textContent = '';
+      miss.forEach(function (d) {
+        var x = document.createElement('button'); x.type = 'button'; x.dataset.day = d;
+        x.setAttribute('aria-pressed', has(d) ? 'true' : 'false');
+        x.setAttribute('aria-label', d + '日目（' + dateOf(d) + '）');
+        var bb = document.createElement('b'); bb.textContent = d;
+        var sp = document.createElement('span'); sp.textContent = dateOf(d, true);
+        x.append(bb, sp); bf.appendChild(x);
+      });
+    }
+
+    // 66日を終えたとき
+    $('finishCard').hidden = !finished;
+    $('statusPart').hidden = finished;
+    $('weekCard').style.order = finished ? -1 : 0;
+    if (finished) {
+      $('finTotal').firstChild.nodeValue = String(n);
+      $('finAutoBox').hidden = sc.length === 0;
+      if (sc.length) $('finAuto').firstChild.nodeValue = String(sc[sc.length - 1].v);
+    }
+
+    // 今日のボタン
+    var btn = $('todayBtn'), on = inRange && has(t);
     btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    btn.textContent = on ? '今日の〇がつきました' : '今日の〇をつける';
+    btn.innerHTML = on ? CHECK + '<span>今日はできた</span>' : CIRCLE + '<span>今日の〇をつける</span>';
+    $('todaySub').textContent = !inRange ? '' : (on ? 'もう一度押すと取り消せます' : dateOf(t) + '（' + t + '日目）');
 
-    $('total').firstChild.nodeValue = String(done.length);
-    $('dayInfo').textContent = today < 1 ? 'まだ始まっていません' : (today > DAYS ? '66日が終了' : '今日は ' + today + ' 日目');
-    $('msg').textContent = message(today, done);
-
-    var grid = $('grid');
-    grid.textContent = '';
+    // マス目
+    var grid = $('grid'); grid.textContent = '';
     for (var d = 1; d <= DAYS; d++) {
       var c = document.createElement('button');
       c.type = 'button';
-      c.className = 'cell' + (done.indexOf(d) >= 0 ? ' done' : '') + (d === today ? ' today' : '') + (d > today ? ' future' : '') + (d === 21 || d === DAYS ? ' mark' : '');
-      c.setAttribute('aria-label', d + '日目' + (done.indexOf(d) >= 0 ? '、できた' : '') + (d > today ? '、これから' : ''));
-      c.setAttribute('aria-pressed', done.indexOf(d) >= 0 ? 'true' : 'false');
-      if (d > today) c.disabled = true;
-      c.textContent = d;
-      c.dataset.day = d;
+      c.className = 'cell' + (has(d) ? ' done' : '') + (d === t ? ' today' : '') + (d > t ? ' future' : '') + (d === 21 || d === DAYS ? ' milestone' : '');
+      c.textContent = d; c.dataset.day = d;
+      c.setAttribute('aria-pressed', has(d) ? 'true' : 'false');
+      c.setAttribute('aria-label', d + '日目（' + dateOf(d) + '）' + (has(d) ? '、できた' : '') + (d === t ? '、今日' : '') + (d > t ? '、これから' : ''));
+      if (d > t) c.disabled = true;
       grid.appendChild(c);
     }
+    $('homeNotice').hidden = !!state.noticeClosed || isStandalone() || !isIOS();
   }
 
-  function toggle(d) {
+  function setDone(d, on) {
     var i = state.done.indexOf(d);
-    if (i >= 0) state.done.splice(i, 1); else state.done.push(d);
+    if (on && i < 0) state.done.push(d);
+    if (!on && i >= 0) state.done.splice(i, 1);
     state.done.sort(function (x, y) { return x - y; });
-    save(state); render();
+  }
+  function toggle(d, fromToday) {
+    var was = has(d);
+    setDone(d, !was); save(); render();
+    var cell = document.querySelector('.cell[data-day="' + d + '"]');
+    if (cell && !was) { cell.classList.add('pop'); try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) {} }
+    lastAction = d;
+    showToast(was ? d + '日目の〇を外しました' : (fromToday ? '今日の〇をつけました' : d + '日目に〇をつけました'), true);
+  }
+  function showToast(text, canUndo) {
+    $('toastText').textContent = text; $('toastUndo').hidden = !canUndo; $('toast').hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { $('toast').hidden = true; }, 5000);
+  }
+  function archiveAndReset(sameHabit) {
+    var sc = scores();
+    state.history.push({ habit: state.habit, cue: state.cue, start: state.start, total: state.done.length, auto: sc.length ? sc[sc.length - 1].v : null });
+    state.done = []; state.auto = {}; state.start = todayYmd(); delete state.returnClosed;
+    save();
+    if (sameHabit) { render(); showToast('新しい66日を始めました', false); } else openSetup('edit');
   }
 
+  // ---- 入力の受け付け ----
+  document.querySelectorAll('.chips').forEach(function (g) {
+    g.addEventListener('click', function (e) { var ch = e.target.closest('.chip'); if (!ch) return; $(g.dataset.for).value = ch.textContent; updateRecipe(); });
+  });
+  ['habit', 'cue'].forEach(function (id) { $(id).addEventListener('input', updateRecipe); });
+  $('setupCancel').addEventListener('click', function () { render(); });
   $('setup').addEventListener('submit', function (e) {
     e.preventDefault();
-    state = { habit: $('habit').value.trim(), cue: $('cue').value.trim(), time: $('time').value, start: $('start').value, done: [] };
-    save(state); render();
+    var h = $('habit').value.trim(), c = $('cue').value.trim(), s = $('start').value || todayYmd();
+    if (!c || !h) {
+      $('setupErr').textContent = !c ? '「いつ？」を入れてください（例をタップしてもOK）' : '「何を？」を入れてください（例をタップしてもOK）';
+      $('setupErr').hidden = false; $(!c ? 'cue' : 'habit').focus(); return;
+    }
+    if (editing && state) { state.habit = h; state.cue = c; state.start = s; }
+    else { state = { habit: h, cue: c, start: s, done: [], auto: {}, history: state ? state.history : [] }; }
+    save(); render(); window.scrollTo(0, 0);
   });
-  $('todayBtn').addEventListener('click', function () { var t = dayIndex(state.start); if (t >= 1 && t <= DAYS) toggle(t); });
-  $('grid').addEventListener('click', function (e) {
-    var c = e.target.closest('.cell'); if (!c || c.disabled) return; toggle(Number(c.dataset.day));
+  $('todayBtn').addEventListener('click', function () { var t = todayIndex(); if (t >= 1 && t <= DAYS) toggle(t, true); });
+  $('grid').addEventListener('click', function (e) { var c = e.target.closest('.cell'); if (!c || c.disabled) return; toggle(Number(c.dataset.day), false); });
+  $('backfill').addEventListener('click', function (e) {
+    var x = e.target.closest('button'); if (!x) return;
+    var d = Number(x.dataset.day), on = !has(d);
+    setDone(d, on); save();
+    x.setAttribute('aria-pressed', on ? 'true' : 'false');
+    $('total').firstChild.nodeValue = String(state.done.length);
+    var cell = document.querySelector('.cell[data-day="' + d + '"]'); if (cell) cell.classList.toggle('done', on);
   });
-  $('printBtn').addEventListener('click', function () { window.print(); });
-  $('resetBtn').addEventListener('click', function () { $('confirmBox').hidden = false; $('confirmYes').focus(); });
-  $('confirmNo').addEventListener('click', function () { $('confirmBox').hidden = true; });
-  $('confirmYes').addEventListener('click', function () {
-    try { localStorage.removeItem(KEY); } catch (e) {}
-    state = null; $('confirmBox').hidden = true; render();
+  $('returnClose').addEventListener('click', function () { state.returnClosed = todayYmd(); save(); render(); });
+  $('lighterBtn').addEventListener('click', function () { openSetup('edit'); });
+  $('scale').addEventListener('click', function (e) {
+    var x = e.target.closest('button'); if (!x) return;
+    var w = Number($('weekCard').dataset.week); state.auto[w] = Number(x.dataset.v); save(); render();
+    showToast('第' + w + '週を記録しました', false);
   });
-  document.addEventListener('visibilitychange', function () { if (!document.hidden && state) render(); });
+  $('weekSkip').addEventListener('click', function () { var w = Number($('weekCard').dataset.week); state.auto[w] = 0; save(); render(); });
+  $('toastUndo').addEventListener('click', function () {
+    if (lastAction == null) return;
+    var d = lastAction; lastAction = null;
+    setDone(d, !has(d)); save(); render(); showToast('元に戻しました', false);
+  });
+  $('homeNoticeClose').addEventListener('click', function () { state.noticeClosed = true; save(); render(); });
+  $('againBtn').addEventListener('click', function () { archiveAndReset(true); });
+  $('nextBtn').addEventListener('click', function () { archiveAndReset(false); $('cue').value = ''; $('habit').value = ''; updateRecipe(); $('setupTitle').innerHTML = '新しい習慣を<wbr>始める'; $('setupLead').textContent = '前の習慣（' + state.history[state.history.length - 1].habit + '）のあとに続けると、つなげやすくなります。'; $('setupSubmit').textContent = '66日をはじめる'; });
+
+  // ---- メニュー ----
+  var menu = $('menu');
+  function sheet(id) { ['menuMain', 'menuBackup', 'menuRestore', 'menuReset'].forEach(function (s) { $(s).hidden = s !== id; }); }
+  function openMenu() { sheet('menuMain'); if (menu.showModal) menu.showModal(); else menu.setAttribute('open', ''); }
+  function closeMenu() { if (menu.close) menu.close(); else menu.removeAttribute('open'); }
+  $('menuBtn').addEventListener('click', openMenu);
+  $('mClose').addEventListener('click', closeMenu);
+  menu.addEventListener('click', function (e) { if (e.target === menu) closeMenu(); });
+  menu.querySelectorAll('[data-back]').forEach(function (b) { b.addEventListener('click', function () { sheet('menuMain'); }); });
+  $('mEdit').addEventListener('click', function () { closeMenu(); openSetup('edit'); });
+  $('mPrint').addEventListener('click', function () { closeMenu(); setTimeout(function () { window.print(); }, 200); });
+  $('mReset').addEventListener('click', function () { sheet('menuReset'); });
+  $('resetYes').addEventListener('click', function () { try { localStorage.removeItem(KEY); } catch (e) {} state = null; closeMenu(); render(); });
+  $('mBackup').addEventListener('click', function () {
+    $('backupText').value = 'TSUZUKU66:' + btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+    $('backupMsg').textContent = 'この文字をコピーして、メモ帳などに貼っておいてください。';
+    sheet('menuBackup');
+  });
+  $('copyBtn').addEventListener('click', function () {
+    var ta = $('backupText');
+    var ok = function () { $('backupMsg').textContent = 'コピーしました。メモ帳などに貼っておいてください。'; };
+    var ng = function () { ta.focus(); ta.select(); $('backupMsg').textContent = '文字を選びました。長押しでコピーしてください。'; };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok, ng); else ng();
+  });
+  $('mRestore').addEventListener('click', function () { $('restoreText').value = ''; $('restoreErr').hidden = true; sheet('menuRestore'); });
+  $('restoreBtn').addEventListener('click', function () {
+    try {
+      var raw = $('restoreText').value.trim().replace(/^TSUZUKU66:/, '');
+      var s = JSON.parse(decodeURIComponent(escape(atob(raw))));
+      if (!s || typeof s.habit !== 'string' || typeof s.cue !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(s.start) || !Array.isArray(s.done)) throw new Error('bad');
+      s.done = s.done.map(Number).filter(function (d, i, a) { return d >= 1 && d <= DAYS && a.indexOf(d) === i; });
+      s.auto = s.auto && typeof s.auto === 'object' ? s.auto : {};
+      s.history = Array.isArray(s.history) ? s.history : [];
+      state = s; save(); closeMenu(); render(); showToast('バックアップから戻しました', false); lastAction = null;
+    } catch (e) { $('restoreErr').textContent = 'バックアップの文字を読み取れませんでした。最初から最後まで、そのまま貼り付けてください。'; $('restoreErr').hidden = false; }
+  });
+
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && state && $('setup').hidden) render(); });
 
   render();
   if ('serviceWorker' in navigator && location.protocol === 'https:') { navigator.serviceWorker.register('sw.js').catch(function () {}); }
