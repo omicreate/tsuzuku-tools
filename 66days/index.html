@@ -281,6 +281,7 @@ dialog::backdrop { background:rgba(15,23,36,.45); }
           <span class="trend" id="autoTrend"></span>
         </div>
         <p class="msg" id="msg" aria-live="polite"></p>
+        <button type="button" class="btn" id="startTodayBtn" hidden>今日から始める</button>
       </div>
     </div>
 
@@ -431,7 +432,7 @@ dialog::backdrop { background:rgba(15,23,36,.45); }
   // ---- 今日の画面 ----
   function message(t) {
     var n = state.done.length;
-    if (t < 1) return 'はじめる日（' + dateOf(1) + '）を待っています。';
+    if (t < 1) return dateOf(1) + 'から始まります。今日から始めたいときは、下のボタンを押してください。';
     var y = t - 1;
     if (has(t)) {
       if (t === 21) return '21日目の〇。「21日で習慣になる」と言われることがあるけれど、研究ではまだ途中。ここからが本番。';
@@ -493,6 +494,7 @@ dialog::backdrop { background:rgba(15,23,36,.45); }
     else { b.textContent = t + '日目'; s.textContent = 'のこり ' + (DAYS - t) + ' 日'; }
     dt.append(b, s);
     $('msg').textContent = finished ? '66日、おつかれさまでした。' : message(t);
+    $('startTodayBtn').hidden = t >= 1;
 
     // 考えずにできた度
     var sc = scores();
@@ -631,6 +633,7 @@ dialog::backdrop { background:rgba(15,23,36,.45); }
     setDone(d, !has(d)); save(); render(); showToast('元に戻しました', false);
   });
   $('homeNoticeClose').addEventListener('click', function () { state.noticeClosed = true; save(); render(); });
+  $('startTodayBtn').addEventListener('click', function () { state.start = todayYmd(); save(); render(); showToast('今日を1日目にしました', false); });
   $('againBtn').addEventListener('click', function () { archiveAndReset(true); });
   $('nextBtn').addEventListener('click', function () { archiveAndReset(false); $('cue').value = ''; $('habit').value = ''; updateRecipe(); $('setupTitle').innerHTML = '新しい習慣を<wbr>始める'; $('setupLead').textContent = '前の習慣（' + state.history[state.history.length - 1].habit + '）のあとに続けると、つなげやすくなります。'; $('setupSubmit').textContent = '66日をはじめる'; });
 
@@ -674,7 +677,12 @@ dialog::backdrop { background:rgba(15,23,36,.45); }
   document.addEventListener('visibilitychange', function () { if (!document.hidden && state && $('setup').hidden) render(); });
 
   render();
-  if ('serviceWorker' in navigator && location.protocol === 'https:') { navigator.serviceWorker.register('sw.js').catch(function () {}); }
+  // 新しい版が届いたら、1回だけ自動で読み込み直す（古い画面が残らないように）
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    var hadController = !!navigator.serviceWorker.controller, reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function () { if (hadController && !reloaded) { reloaded = true; location.reload(); } });
+    navigator.serviceWorker.register('sw.js').then(function (reg) { try { reg.update(); } catch (e) {} }).catch(function () {});
+  }
 })();
 </script>
 </body>
