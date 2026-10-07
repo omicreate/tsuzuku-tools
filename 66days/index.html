@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>66日チェック表｜つづくラボ</title>
+<meta name="description" content="習慣が身につくまでの66日を、1日1タップで記録するチェック表。数えるのは連続じゃなく合計。記録はこの端末にだけ保存されます。">
+<meta name="theme-color" content="#F3F6FA">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@700;900&family=Noto+Sans+JP:wght@400;500;700&family=DM+Mono&display=swap">
+<style>
+/* 1列の画面。上から「きっかけ→今日のボタン→66マス→ルール」。紙のチェック表と同じ並び */
+:root {
+  --bg:#F3F6FA; --surface:#FFFFFF; --fg:#18263B; --muted:#5E6F87; --line:#D3DDEA;
+  --ink:#2C5F9E; --ink-soft:#E3ECF7; --on-ink:#FFFFFF;
+  --display:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif;
+  --body:"Noto Sans JP","Hiragino Sans","Yu Gothic",sans-serif;
+  --mono:"DM Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg:#0F1724; --surface:#172234; --fg:#E6EDF6; --muted:#9DAEC4; --line:#2B3B53; --ink:#7FB0EC; --ink-soft:#1C2E47; --on-ink:#0F1724; color-scheme:dark; }
+}
+:root[data-theme="dark"] { --bg:#0F1724; --surface:#172234; --fg:#E6EDF6; --muted:#9DAEC4; --line:#2B3B53; --ink:#7FB0EC; --ink-soft:#1C2E47; --on-ink:#0F1724; color-scheme:dark; }
+* { box-sizing:border-box; }
+[hidden] { display:none !important; }
+html, body { margin:0; }
+body { background:var(--bg); color:var(--fg); font-family:var(--body); font-size:16px; line-height:1.7; }
+.wrap { max-width:560px; margin:0 auto; padding-inline:16px; padding-block:calc(20px + env(safe-area-inset-top, 0px)) calc(40px + env(safe-area-inset-bottom, 0px)); display:flex; flex-direction:column; gap:20px; }
+.brand { font-family:var(--mono); font-size:12px; letter-spacing:.24em; color:var(--muted); }
+h1 { font-family:var(--display); font-weight:900; font-size:clamp(30px, 9vw, 40px); line-height:1.15; margin:0; text-wrap:balance; }
+.lead { margin:0; color:var(--muted); font-weight:500; }
+.lead b { color:var(--ink); }
+.panel { background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:18px; display:flex; flex-direction:column; gap:14px; }
+label { font-weight:700; font-size:14px; display:flex; flex-direction:column; gap:6px; }
+label small { font-weight:400; color:var(--muted); }
+input, select { font:inherit; color:var(--fg); background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:12px 12px; min-height:48px; width:100%; }
+input:focus-visible, select:focus-visible, button:focus-visible { outline:3px solid var(--ink); outline-offset:2px; }
+.row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.row2 > * { min-width:0; }
+button { font:inherit; cursor:pointer; border-radius:12px; min-height:48px; padding:10px 16px; border:1px solid var(--line); background:var(--surface); color:var(--fg); font-weight:700; }
+.primary { background:var(--ink); color:var(--on-ink); border-color:var(--ink); font-size:18px; min-height:60px; }
+.primary[aria-pressed="true"] { background:var(--ink-soft); color:var(--ink); }
+.plan { font-family:var(--display); font-size:20px; font-weight:700; line-height:1.5; }
+.plan span { color:var(--ink); }
+.stats { display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; }
+.total { font-family:var(--display); font-weight:900; font-size:40px; line-height:1; font-variant-numeric:tabular-nums; }
+.total small { font-size:18px; color:var(--muted); font-weight:700; }
+.day { color:var(--muted); font-size:14px; }
+.msg { margin:0; padding:12px 14px; border-radius:12px; background:var(--ink-soft); color:var(--fg); font-size:15px; }
+.grid { display:grid; grid-template-columns:repeat(11, minmax(0, 1fr)); gap:5px; }
+.cell { aspect-ratio:1 / 1; max-width:100%; min-height:0; padding:0; border-radius:8px; border:1.5px solid var(--line); background:transparent; font-family:var(--mono); font-size:11px; font-weight:400; color:var(--muted); display:grid; place-items:center; }
+.cell.done { background:var(--ink); border-color:var(--ink); color:var(--on-ink); }
+.cell.today { border-color:var(--ink); border-width:2.5px; }
+.cell.future { opacity:.45; cursor:default; }
+.cell.mark:not(.done) { background:var(--ink-soft); }
+.legend { display:flex; gap:14px; flex-wrap:wrap; font-size:13px; color:var(--muted); }
+.rules { display:flex; flex-direction:column; gap:10px; margin:0; padding:0; list-style:none; counter-reset:r; }
+.rules li { display:grid; grid-template-columns:28px 1fr; gap:6px; }
+.rules li::before { counter-increment:r; content:counter(r); font-family:var(--display); font-weight:900; font-size:22px; color:var(--ink); line-height:1.3; }
+.rules b { display:block; }
+.rules span { color:var(--muted); font-size:14px; }
+.actions { display:flex; gap:10px; flex-wrap:wrap; }
+.actions button { flex:1 1 140px; }
+.confirm { border:1px solid var(--ink); }
+footer { font-size:12px; color:var(--muted); display:flex; flex-direction:column; gap:6px; }
+footer a { color:var(--ink); }
+@media print {
+  body { background:#fff; color:#000; }
+  .noprint { display:none !important; }
+  .panel { border-color:#bbb; break-inside:avoid; }
+  .cell.future { opacity:1; }
+}
+@media (prefers-reduced-motion: no-preference) { .cell { transition:background-color .15s; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">TSUZUKU LAB</div>
+    <h1>66日チェック表</h1>
+    <p class="lead">数えるのは、<b>連続</b>じゃなく<b>合計</b>。</p>
+  </header>
+
+  <!-- はじめの設定 -->
+  <form class="panel" id="setup" hidden>
+    <label for="habit">わたしの習慣<small>1つだけ・小さく（例：腕立てを5回する）</small><input id="habit" required maxlength="40" placeholder="腕立てを5回する"></label>
+    <label for="cue">きっかけ<small>毎日かならずやることにくっつける（例：朝コーヒーをいれたら）</small><input id="cue" required maxlength="40" placeholder="朝コーヒーをいれたら"></label>
+    <div class="row2">
+      <label for="time">時間帯<small>できれば朝</small>
+        <select id="time"><option>朝</option><option>昼</option><option>夜</option></select>
+      </label>
+      <label for="start">はじめた日<small>&nbsp;</small><input id="start" type="date" required></label>
+    </div>
+    <button class="primary" type="submit">66日をはじめる</button>
+  </form>
+
+  <!-- 記録の画面 -->
+  <section id="main" hidden style="display:flex; flex-direction:column; gap:20px">
+    <div class="panel">
+      <div class="plan" id="plan"></div>
+      <button class="primary noprint" id="todayBtn" type="button" aria-pressed="false">今日の〇をつける</button>
+      <div class="stats">
+        <div class="total" id="total">0<small> / 66</small></div>
+        <div class="day" id="dayInfo"></div>
+      </div>
+      <p class="msg" id="msg"></p>
+    </div>
+
+    <div class="panel">
+      <div class="grid" id="grid" role="group" aria-label="66日のマス目。過ぎた日はタップで〇をつけたり外したりできる"></div>
+      <div class="legend"><span>枠が太い：今日</span><span>空白：抜けた日（それでOK）</span><span>マスをタップ：〇をつける・外す</span></div>
+    </div>
+
+    <div class="panel">
+      <ol class="rules">
+        <li><div><b>1つだけ、小さく。自分で選んだものを。</b><span>かんたんな行動ほど早く身につく。運動は、食べる・飲む習慣より約1.5倍かかった。</span></div></li>
+        <li><div><b>「〇〇したら△△する」。できれば朝に。</b><span>同じストレッチでも、朝は約106日、夜は約154日で習慣になった。</span></div></li>
+        <li><div><b>1日抜けても、リセットしない。</b><span>1日サボっても、習慣づくりにはほとんど影響しなかった。</span></div></li>
+      </ol>
+    </div>
+
+    <div class="actions noprint">
+      <button type="button" id="printBtn">印刷する</button>
+      <button type="button" id="resetBtn">新しく始める</button>
+    </div>
+    <div class="panel confirm noprint" id="confirmBox" hidden>
+      <p style="margin:0">いまの記録を消して、新しく始めますか？ 消した記録は戻せません。</p>
+      <div class="actions">
+        <button type="button" id="confirmYes">消して始める</button>
+        <button type="button" id="confirmNo">やめる</button>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p style="margin:0">記録は、この端末のブラウザの中にだけ保存されます。どこにも送られません。ブラウザのデータを消すと記録も消えます。</p>
+    <p style="margin:0">習慣になるまでの日数は人によって大きくちがいます（研究では18日〜254日）。66日は目安です。</p>
+    <p style="margin:0">参考：Lally et al. (2010) European Journal of Social Psychology／Fournier et al. (2017) Health Psychology／Singh et al. (2024) Healthcare 12(23), 2488</p>
+    <p style="margin:0">つくった人：つづくラボ（研究でわかった、続く仕組み。）</p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var KEY = 'tsuzuku-66days-v1';
+  var DAYS = 66;
+  var $ = function (id) { return document.getElementById(id); };
+
+  function load() { try { return JSON.parse(localStorage.getItem(KEY)) || null; } catch (e) { return null; } }
+  function save(s) { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* 保存できない環境でも画面は動かす */ } }
+
+  function ymd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function parseYmd(s) { var p = s.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
+  // はじめた日を1日目として、今日が何日目か（端末の日付で数える）
+  function dayIndex(start) {
+    var a = parseYmd(start), t = new Date(); t = new Date(t.getFullYear(), t.getMonth(), t.getDate());
+    return Math.round((t - a) / 86400000) + 1;
+  }
+
+  var state = load();
+
+  function showSetup() {
+    $('main').hidden = true; $('setup').hidden = false;
+    $('start').value = ymd(new Date());
+  }
+
+  function message(today, done) {
+    var n = done.length;
+    if (today < 1) return 'はじめる日を待っています。';
+    if (today > DAYS) return '66日が終わりました。合計 ' + n + ' 日。考えなくてもできるようになっていたら、それが習慣です。';
+    var yesterday = today - 1;
+    if (done.indexOf(today) < 0 && yesterday >= 1 && done.indexOf(yesterday) < 0) return '昨日は空白。でも大丈夫。1日抜けても、積み上げは消えません。今日の1回から再開しよう。';
+    if (done.indexOf(today) >= 0 && today !== 21) return '今日の〇がつきました。合計 ' + n + ' 日。';
+    if (today === 21) return '21日目。「21日で習慣になる」と言われることがあるけれど、研究ではまだ途中。ここからが本番。';
+    if (today === 1) return '1日目。まずは今日の1回だけ。';
+    return '今日の1回で、合計 ' + (n + 1) + ' 日になります。';
+  }
+
+  function render() {
+    if (!state) { showSetup(); return; }
+    $('setup').hidden = true; $('main').hidden = false;
+    var today = dayIndex(state.start);
+    var done = state.done;
+    var plan = $('plan');
+    plan.textContent = '';
+    var a = document.createElement('span'); a.textContent = state.cue;
+    var b = document.createElement('span'); b.textContent = state.habit;
+    plan.append(a, '、', b, '。（', state.time, '）');
+
+    var inRange = today >= 1 && today <= DAYS;
+    var btn = $('todayBtn');
+    btn.disabled = !inRange;
+    var on = inRange && done.indexOf(today) >= 0;
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    btn.textContent = on ? '今日の〇がつきました' : '今日の〇をつける';
+
+    $('total').firstChild.nodeValue = String(done.length);
+    $('dayInfo').textContent = today < 1 ? 'まだ始まっていません' : (today > DAYS ? '66日が終了' : '今日は ' + today + ' 日目');
+    $('msg').textContent = message(today, done);
+
+    var grid = $('grid');
+    grid.textContent = '';
+    for (var d = 1; d <= DAYS; d++) {
+      var c = document.createElement('button');
+      c.type = 'button';
+      c.className = 'cell' + (done.indexOf(d) >= 0 ? ' done' : '') + (d === today ? ' today' : '') + (d > today ? ' future' : '') + (d === 21 || d === DAYS ? ' mark' : '');
+      c.setAttribute('aria-label', d + '日目' + (done.indexOf(d) >= 0 ? '、できた' : '') + (d > today ? '、これから' : ''));
+      c.setAttribute('aria-pressed', done.indexOf(d) >= 0 ? 'true' : 'false');
+      if (d > today) c.disabled = true;
+      c.textContent = d;
+      c.dataset.day = d;
+      grid.appendChild(c);
+    }
+  }
+
+  function toggle(d) {
+    var i = state.done.indexOf(d);
+    if (i >= 0) state.done.splice(i, 1); else state.done.push(d);
+    state.done.sort(function (x, y) { return x - y; });
+    save(state); render();
+  }
+
+  $('setup').addEventListener('submit', function (e) {
+    e.preventDefault();
+    state = { habit: $('habit').value.trim(), cue: $('cue').value.trim(), time: $('time').value, start: $('start').value, done: [] };
+    save(state); render();
+  });
+  $('todayBtn').addEventListener('click', function () { var t = dayIndex(state.start); if (t >= 1 && t <= DAYS) toggle(t); });
+  $('grid').addEventListener('click', function (e) {
+    var c = e.target.closest('.cell'); if (!c || c.disabled) return; toggle(Number(c.dataset.day));
+  });
+  $('printBtn').addEventListener('click', function () { window.print(); });
+  $('resetBtn').addEventListener('click', function () { $('confirmBox').hidden = false; $('confirmYes').focus(); });
+  $('confirmNo').addEventListener('click', function () { $('confirmBox').hidden = true; });
+  $('confirmYes').addEventListener('click', function () {
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    state = null; $('confirmBox').hidden = true; render();
+  });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && state) render(); });
+
+  render();
+  if ('serviceWorker' in navigator && location.protocol === 'https:') { navigator.serviceWorker.register('sw.js').catch(function () {}); }
+})();
+</script>
+</body>
+</html>
