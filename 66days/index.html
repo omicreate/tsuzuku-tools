@@ -159,6 +159,31 @@ footer button.link:focus-visible { outline:3px solid var(--ink); outline-offset:
 .today-btn svg { width:26px; height:26px; flex:none; }
 .today-btn[aria-pressed="true"] { background:var(--surface); color:var(--ink-strong); }
 .today-sub { text-align:center; font-size:12px; color:var(--muted); margin-top:6px; min-height:18px; }
+/* やり方「2分だけはじめる」（第2回）：オンの日だけ、今日の〇の上に出す */
+body.has-two { --bar-h:150px; }
+.two-btn { width:100%; min-height:48px; margin-bottom:8px; border-radius:16px; border:1.5px solid var(--ink); background:var(--surface); color:var(--ink-strong); font-family:var(--display); font-weight:700; font-size:17px; display:flex; align-items:center; justify-content:center; gap:8px; }
+.two-btn svg { width:20px; height:20px; flex:none; }
+.part { display:flex; align-items:center; gap:14px; padding:14px; border-radius:16px; border:1px solid var(--line); background:var(--bg); cursor:pointer; }
+.part > span { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.part b { font-size:16px; }
+.part small { font-size:13px; color:var(--muted); line-height:1.6; }
+.switch { flex:none; position:relative; width:52px; height:32px; padding:0; border-radius:999px; border:none; background:var(--surface); box-shadow:inset 0 0 0 2px var(--muted); transition:background .2s; }
+.switch::after { content:""; position:absolute; top:5px; left:5px; width:22px; height:22px; border-radius:50%; background:var(--muted); transition:transform .2s; }
+.switch[aria-checked="true"] { background:var(--ink); box-shadow:none; }
+.switch[aria-checked="true"]::after { transform:translateX(20px); background:var(--surface); }
+.timer { position:fixed; inset:0; z-index:30; overflow:auto; background:var(--bg); display:flex; padding:calc(24px + env(safe-area-inset-top, 0px)) 16px calc(24px + env(safe-area-inset-bottom, 0px)); }
+.timer-card { width:100%; max-width:420px; margin:auto; display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center; }
+.timer-habit { font-family:var(--display); font-weight:900; font-size:clamp(22px, 6.4vw, 26px); line-height:1.4; text-wrap:balance; overflow-wrap:anywhere; }
+.ring { position:relative; width:min(240px, 64vw); aspect-ratio:1 / 1; max-width:100%; margin:6px 0; }
+.ring > svg { width:100%; height:100%; transform:rotate(-90deg); }
+.ring circle { fill:none; stroke-width:8; }
+.ring .ring-bg { stroke:var(--ink-soft); }
+.ring .ring-fg { stroke:var(--ink); stroke-linecap:round; transition:stroke-dashoffset .25s linear; }
+.ring-time { position:absolute; inset:0; display:grid; place-items:center; font-family:var(--mono); font-size:clamp(44px, 14vw, 56px); color:var(--fg); font-variant-numeric:tabular-nums; letter-spacing:.02em; }
+.ring-time svg { width:38%; height:38%; color:var(--ink); }
+.timer-end { display:flex; flex-direction:column; gap:10px; width:100%; }
+.timer-end h2 { font-size:22px; }
+.timer .btn { width:100%; }
 
 .toast { position:fixed; left:16px; right:16px; bottom:calc(var(--bar-h) + 28px + env(safe-area-inset-bottom, 0px)); max-width:488px; margin:0 auto; background:var(--fg); color:var(--bg); border-radius:14px; padding:6px 6px 6px 16px; min-height:52px; display:flex; align-items:center; justify-content:space-between; gap:12px; box-shadow:var(--shadow); z-index:20; font-size:15px; }
 .toast .btn-text { color:var(--bg); text-decoration:underline; flex:none; white-space:nowrap; }
@@ -200,7 +225,7 @@ dialog::backdrop { background:rgba(15,23,36,.45); }
 dialog { overflow:auto; }
 
 @media print {
-  .bar, .top button, .toast, .notice, footer, .no-print, .celebrate, #buddyCard, #buddySay, details.tips summary svg { display:none !important; }
+  .bar, .top button, .toast, .notice, footer, .no-print, .celebrate, .timer, #buddyCard, #buddySay, details.tips summary svg { display:none !important; }
   body { background:#fff; color:#000; }
   .wrap { padding:0; }
   .card { border-color:#999; break-inside:avoid; }
@@ -324,6 +349,15 @@ dialog { overflow:auto; }
       </div>
     </div>
 
+    <!-- 新しいやり方を知らせる（1回だけ。オンにするか、いまはいいを選ぶと出なくなる） -->
+    <div class="card accent no-print" id="partsCard" hidden>
+      <span class="label">新しいやり方</span>
+      <h2>やる気を待たずに、2分だけはじめる</h2>
+      <p class="small muted">2分のタイマーで始めて、2分たったらやめてもいい方法です。オンにすると、「今日できた」の上にボタンが出ます。あとからメニューの「やり方を足す」で変えられます。</p>
+      <button type="button" class="choice primary" id="partsOn"><b>オンにする</b><span>記録は、これまでと同じです</span></button>
+      <button type="button" class="btn-text" id="partsLater" style="align-self:flex-end">いまはいい</button>
+    </div>
+
     <!-- 週1回のふり返り -->
     <div class="card" id="weekCard" hidden>
       <span class="label" id="weekLabel"></span>
@@ -373,6 +407,7 @@ dialog { overflow:auto; }
 
 <div class="bar" id="bar" hidden>
   <div class="bar-inner">
+    <button type="button" class="two-btn" id="twoBtn" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2.5h5"/></svg><span>2分だけはじめる</span></button>
     <button type="button" class="today-btn" id="todayBtn" aria-pressed="false"></button>
     <div class="today-sub" id="todaySub"></div>
   </div>
@@ -388,6 +423,28 @@ dialog { overflow:auto; }
   </div>
 </div>
 
+<!-- 2分だけはじめる：2分のタイマー。2分たったら、やめてもいい -->
+<div class="timer" id="timer" role="dialog" aria-modal="true" aria-labelledby="timerHabit" hidden>
+  <div class="timer-card">
+    <span class="label">2分だけ</span>
+    <p class="timer-habit" id="timerHabit"></p>
+    <div class="ring">
+      <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="ring-bg" cx="60" cy="60" r="54"/><circle class="ring-fg" id="ringFg" cx="60" cy="60" r="54"/></svg>
+      <span class="ring-time" id="timerTime" role="timer">2:00</span>
+    </div>
+    <div class="timer-end" id="timerRun">
+      <p class="muted">2分たったら、やめてもいい。</p>
+      <button type="button" class="btn" id="timerStop">やめる</button>
+    </div>
+    <div class="timer-end" id="timerEnd" role="status" hidden>
+      <h2 id="timerQ">2分できました。今日の〇をつけますか？</h2>
+      <p class="muted small" id="timerMore">続けたくなったら、そのままどうぞ。</p>
+      <button type="button" class="btn btn-primary btn-big" id="timerMark">〇をつける</button>
+      <button type="button" class="btn" id="timerClose">つけずに閉じる</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast" role="status" hidden><span id="toastText"></span><button type="button" class="btn-text" id="toastUndo">元に戻す</button></div>
 
 <dialog id="menu" aria-labelledby="menuTitle">
@@ -395,6 +452,7 @@ dialog { overflow:auto; }
     <h2 id="menuTitle">メニュー</h2>
     <button type="button" class="item" id="mEdit">計画を変える<small>きっかけ・やることを直せます。これまでの〇はそのまま</small></button>
     <button type="button" class="item" id="mBuddy">相棒を変える<small id="mBuddyNow">声をかけてくれる人をえらび直せます</small></button>
+    <button type="button" class="item" id="mParts">やり方を足す<small id="mPartsNow">2分だけはじめる：オフ</small></button>
     <button type="button" class="item" id="mShare">記録を画像でシェア<small>合計とマス目を1枚の画像に。習慣の中身は入れるか選べます</small></button>
     <button type="button" class="item" id="mBackup">記録をバックアップする<small>文字のかたまりをコピーして、メモ帳などに貼っておく</small></button>
     <button type="button" class="item" id="mRestore">バックアップから戻す<small>機種変更したときや、記録が消えたときに</small></button>
@@ -418,6 +476,15 @@ dialog { overflow:auto; }
     <h2>相棒を変える</h2>
     <div class="buddy-list" id="buddyListMenu"></div>
     <div class="form-actions"><button type="button" class="btn" data-back>もどる</button><button type="button" class="btn" id="buddyNoneMenu">相棒なし</button></div>
+  </div>
+  <div class="sheet" id="menuParts" hidden>
+    <h2>やり方を足す</h2>
+    <p class="small muted">続けるための「やり方」を、必要なものだけ足せます。どれも、記録はこれまでと同じです。</p>
+    <label class="part" for="twoSwitch">
+      <span><b id="twoName">2分だけはじめる</b><small>やる気を待たずに、2分のタイマーで始めます。2分たったら、やめてもいい。オンにすると、「今日できた」の上にボタンが出ます。</small></span>
+      <button type="button" class="switch" role="switch" aria-checked="false" id="twoSwitch" aria-labelledby="twoName"></button>
+    </label>
+    <div class="form-actions"><button type="button" class="btn" data-back>もどる</button></div>
   </div>
   <div class="sheet" id="menuShare" hidden>
     <h2>記録を画像でシェア</h2>
@@ -447,6 +514,7 @@ dialog { overflow:auto; }
       s.done = Array.isArray(s.done) ? s.done : [];
       s.auto = s.auto && typeof s.auto === 'object' ? s.auto : {};
       s.history = Array.isArray(s.history) ? s.history : [];
+      s.parts = s.parts && typeof s.parts === 'object' ? s.parts : {};
       return s;
     } catch (e) { return null; }
   }
@@ -462,6 +530,9 @@ dialog { overflow:auto; }
   function todayIndex() { var a = parseYmd(state.start), t = new Date(); t = new Date(t.getFullYear(), t.getMonth(), t.getDate()); return Math.round((t - a) / 86400000) + 1; }
   function dateOf(day, short) { var d = parseYmd(state.start); d.setDate(d.getDate() + day - 1); return short ? (d.getMonth() + 1) + '/' + d.getDate() : (d.getMonth() + 1) + '月' + d.getDate() + '日'; }
   function has(d) { return state.done.indexOf(d) >= 0; }
+  // やり方（部品）：state.parts に { two: true/false } で持つ。まだ選んでいないものは undefined
+  function partOf(id) { return state && state.parts ? state.parts[id] : undefined; }
+  function setPart(id, on) { if (!state.parts) state.parts = {}; state.parts[id] = !!on; save(); }
   function scores() { var out = []; for (var w = 1; w <= WEEKS; w++) { var v = Number(state.auto[w]); if (v >= 1 && v <= 5) out.push({ w: w, v: v }); } return out; }
 
   var state = load();
@@ -691,6 +762,11 @@ dialog { overflow:auto; }
     $('buddyCard').hidden = !askBuddy;
     if (askBuddy) fillBuddies($('buddyList'), pickBuddy);
 
+    // 新しいやり方を1回だけ知らせる（お願いは一度に1つだけ：空いた日 ＞ 週のふり返り ＞ 相棒 ＞ 新しいやり方）。
+    // 始めた日は出さない（計画と相棒で手いっぱいの日だから）。今日の〇がまだの日だけ（2分で始めたい時だから）
+    var askParts = partOf('two') === undefined && inRange && t >= 2 && !has(t) && !showReturn && !w && !askBuddy;
+    $('partsCard').hidden = !askParts;
+
     // 今日できた日は、相棒の一言を出す（押したときの一言を、その日のあいだ残す）
     var B = buddy(), showSay = !!B && inRange && has(t);
     $('buddySay').hidden = !showSay; $('msg').hidden = showSay;
@@ -714,6 +790,8 @@ dialog { overflow:auto; }
     btn.setAttribute('aria-pressed', on ? 'true' : 'false');
     btn.innerHTML = on ? CHECK + '<span>今日はできた</span>' : '<span>今日できた</span>';
     $('todaySub').textContent = !inRange ? '' : (on ? 'もう一度押すと取り消せます' : dateOf(t) + '（' + t + '日目）');
+    var showTwo = partOf('two') === true && inRange && !on;
+    $('twoBtn').hidden = !showTwo; document.body.classList.toggle('has-two', showTwo);
 
     // マス目
     var grid = $('grid'); grid.textContent = '';
@@ -786,7 +864,7 @@ dialog { overflow:auto; }
       $('setupErr').hidden = false; $(!c ? 'cue' : 'habit').focus(); return;
     }
     if (editing && state) { state.habit = h; state.cue = c; state.start = s; }
-    else { state = { habit: h, cue: c, start: s, done: [], auto: {}, history: state ? state.history : [] }; }
+    else { state = { habit: h, cue: c, start: s, done: [], auto: {}, history: state ? state.history : [], parts: state ? state.parts : {} }; }
     save(); render(); window.scrollTo(0, 0);
   });
   $('todayBtn').addEventListener('click', function () { var t = todayIndex(); if (t >= 1 && t <= DAYS) toggle(t, true); });
@@ -822,8 +900,8 @@ dialog { overflow:auto; }
 
   // ---- メニュー ----
   var menu = $('menu');
-  function sheet(id) { ['menuMain', 'menuBuddy', 'menuShare', 'menuBackup', 'menuRestore', 'menuReset'].forEach(function (s) { $(s).hidden = s !== id; }); }
-  function openMenu() { var B = buddy(); $('mBuddyNow').textContent = B ? 'いまの相棒：' + B.name : 'いまは相棒なし。声をかけてくれる人をえらべます'; sheet('menuMain'); if (menu.showModal) menu.showModal(); else menu.setAttribute('open', ''); }
+  function sheet(id) { ['menuMain', 'menuBuddy', 'menuParts', 'menuShare', 'menuBackup', 'menuRestore', 'menuReset'].forEach(function (s) { $(s).hidden = s !== id; }); }
+  function openMenu() { var B = buddy(); $('mBuddyNow').textContent = B ? 'いまの相棒：' + B.name : 'いまは相棒なし。声をかけてくれる人をえらべます'; $('mPartsNow').textContent = '2分だけはじめる：' + (partOf('two') ? 'オン' : 'オフ'); sheet('menuMain'); if (menu.showModal) menu.showModal(); else menu.setAttribute('open', ''); }
   function closeMenu() { if (menu.close) menu.close(); else menu.removeAttribute('open'); }
   $('menuBtn').addEventListener('click', openMenu);
   $('mClose').addEventListener('click', closeMenu);
@@ -836,6 +914,84 @@ dialog { overflow:auto; }
   $('celeClose').addEventListener('click', closeCelebrate);
   $('celebrate').addEventListener('click', function (e) { if (e.target === $('celebrate')) closeCelebrate(); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('celebrate').hidden) closeCelebrate(); });
+
+  // ---- やり方を足す ----
+  function renderParts() { $('twoSwitch').setAttribute('aria-checked', partOf('two') ? 'true' : 'false'); }
+  $('mParts').addEventListener('click', function () { renderParts(); sheet('menuParts'); });
+  $('twoSwitch').addEventListener('click', function () { setPart('two', !partOf('two')); renderParts(); render(); });
+  $('partsOn').addEventListener('click', function () { setPart('two', true); render(); showToast('「2分だけはじめる」をオンにしました', false); });
+  $('partsLater').addEventListener('click', function () { setPart('two', false); render(); showToast('メニューの「やり方を足す」から、いつでもオンにできます', false); });
+
+  // ---- 2分だけはじめる（第2回）：2分のタイマー。2分たったら、やめてもいい ----
+  // 時間は「終わる時刻」で数える（画面を消したり、ほかのアプリに移ったりしても、戻ったときに正しい）
+  var TWO_MS = 120000, RING = 2 * Math.PI * 54, timerAt = 0, timerTick = null, wake = null, audio = null;
+  function mmss(ms) { var s = Math.ceil(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+  function keepAwake(on) { // タイマーのあいだ、画面を消さない（できない端末では何もしない）
+    try {
+      if (on && navigator.wakeLock && (!wake || wake.released)) navigator.wakeLock.request('screen').then(function (l) { wake = l; if (!timerTick) { l.release().catch(function () {}); wake = null; } }, function () {});
+      if (!on && wake) { wake.release().catch(function () {}); wake = null; }
+    } catch (e) {}
+  }
+  function chime() { // 終わりの合図：小さな2音（マナーモードでは鳴らないことがある）
+    try {
+      if (!audio) return;
+      if (audio.resume) audio.resume();
+      var now = audio.currentTime;
+      [[784, 0], [1047, 0.18]].forEach(function (n) {
+        var o = audio.createOscillator(), g = audio.createGain();
+        o.type = 'sine'; o.frequency.value = n[0];
+        g.gain.setValueAtTime(0.0001, now + n[1]);
+        g.gain.exponentialRampToValueAtTime(0.16, now + n[1] + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, now + n[1] + 0.9);
+        o.connect(g); g.connect(audio.destination); o.start(now + n[1]); o.stop(now + n[1] + 1);
+      });
+    } catch (e) {}
+    try { if (navigator.vibrate) navigator.vibrate([90, 70, 90]); } catch (e) {}
+  }
+  function timerOpen(on) {
+    $('timer').hidden = !on;
+    document.querySelector('.wrap').inert = on; $('bar').inert = on;
+    document.body.style.overflow = on ? 'hidden' : '';
+  }
+  function tick() {
+    var left = Math.max(0, timerAt - Date.now());
+    $('timerTime').textContent = mmss(left);
+    $('ringFg').style.strokeDashoffset = String(RING * left / TWO_MS); // 輪は、時間がたつほど満ちていく
+    if (left <= 0) timerDone();
+  }
+  function startTimer() {
+    $('timerHabit').textContent = state.habit;
+    $('timerRun').hidden = false; $('timerEnd').hidden = true;
+    $('ringFg').style.strokeDasharray = RING + ' ' + (RING + 1);
+    try { var AC = window.AudioContext || window.webkitAudioContext; if (AC && !audio) audio = new AC(); if (audio && audio.resume) audio.resume(); } catch (e) {} // 押したときに用意しておく（音は、押したあとでないと鳴らせない）
+    timerAt = Date.now() + TWO_MS;
+    clearInterval(timerTick); timerTick = setInterval(tick, 250);
+    timerOpen(true); tick(); keepAwake(true);
+    $('timerStop').focus();
+  }
+  function timerDone() {
+    clearInterval(timerTick); timerTick = null; timerAt = 0; keepAwake(false);
+    var t = todayIndex(), can = t >= 1 && t <= DAYS, done = can && has(t);
+    $('timerTime').innerHTML = CHECK;
+    $('timerQ').textContent = !can ? '2分できました。' : done ? '2分できました。今日の〇は、もうついています。' : '2分できました。今日の〇をつけますか？';
+    $('timerMark').hidden = !can || done;
+    $('timerClose').textContent = $('timerMark').hidden ? '閉じる' : 'つけずに閉じる';
+    $('timerRun').hidden = true; $('timerEnd').hidden = false;
+    chime();
+    ($('timerMark').hidden ? $('timerClose') : $('timerMark')).focus();
+  }
+  function closeTimer() {
+    clearInterval(timerTick); timerTick = null; timerAt = 0; keepAwake(false);
+    timerOpen(false);
+    var b = $('twoBtn').hidden ? $('todayBtn') : $('twoBtn'); if (!$('bar').hidden) b.focus();
+  }
+  function stopTimer() { closeTimer(); showToast('とちゅうでやめても大丈夫です。やった日は、「今日できた」で〇をつけられます', false); }
+  $('twoBtn').addEventListener('click', function () { if (state) startTimer(); });
+  $('timerStop').addEventListener('click', stopTimer);
+  $('timerClose').addEventListener('click', closeTimer);
+  $('timerMark').addEventListener('click', function () { closeTimer(); var t = todayIndex(); if (t >= 1 && t <= DAYS && !has(t)) toggle(t, true); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('timer').hidden) { if (timerTick) stopTimer(); else closeTimer(); } });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && timerTick) { tick(); keepAwake(true); } });
 
   // ---- 記録を画像にする（この端末の中だけで作る）----
   function wrapText(g, text, x, y, maxW, lh, maxLines) {
@@ -930,6 +1086,7 @@ dialog { overflow:auto; }
       s.done = s.done.map(Number).filter(function (d, i, a) { return d >= 1 && d <= DAYS && a.indexOf(d) === i; });
       s.auto = s.auto && typeof s.auto === 'object' ? s.auto : {};
       s.history = Array.isArray(s.history) ? s.history : [];
+      s.parts = s.parts && typeof s.parts === 'object' ? s.parts : {};
       state = s; save(); closeMenu(); render(); showToast('バックアップから戻しました', false); lastAction = null;
     } catch (e) { $('restoreErr').textContent = 'バックアップの文字を読み取れませんでした。最初から最後まで、そのまま貼り付けてください。'; $('restoreErr').hidden = false; }
   });
@@ -941,7 +1098,7 @@ dialog { overflow:auto; }
   // 送るもの：道具の名前・リンクの印（?src=）・ホーム画面から開いたか・アプリの版。名前・記録・端末ID・Cookie・位置は送らない。
   // 送らないとき：公開URL以外／「送らないようにする」を押したとき／ブラウザの「追跡しない」（DNT・GPC）がオンのとき
   var COUNTER_URL = 'https://script.google.com/macros/s/AKfycbw5hLZfocHHSr7gFTrMAI_UL_EJNVPL8Pi8zG0BJ39n8amavnXcdHqCdp6Ujz2Qa_A/exec';
-  var APP_ID = 'tsuzuku-66days', APP_V = '1.1', PUBLIC_HOST = 'omicreate.github.io';
+  var APP_ID = 'tsuzuku-66days', APP_V = '1.2', PUBLIC_HOST = 'omicreate.github.io';
   var COUNT_OFF = 'tsuzuku-count-off', SRC_KEY = 'tsuzuku-src';
   function cleanSrc(v) { return v && /^[A-Za-z0-9_-]{1,40}$/.test(v) ? v : ''; }
   function readSource() { // ?src= を読んで覚え、アドレスからは消す（そのURLを人に送っても、印が広がらないように）

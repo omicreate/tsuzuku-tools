@@ -1,6 +1,6 @@
 // 一度開いたら、電波がなくても使えるようにする（記録は端末の中なので通信は不要）
 // 画面（HTML）はネットを先に見て、つながらないときだけ保存しておいた版を出す。更新がすぐ届くようにするため。
-const CACHE = '66days-v6';
+const CACHE = '66days-v7';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => {
