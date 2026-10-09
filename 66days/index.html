@@ -940,7 +940,7 @@ dialog { overflow:auto; }
   // 送り先は tools/metrics/受け口.gs（スプレッドシート tsuzuku_lab_数値集計）。COUNTER_URL が空のあいだは何も送らない。
   // 送るもの：道具の名前・リンクの印（?src=）・ホーム画面から開いたか・アプリの版。名前・記録・端末ID・Cookie・位置は送らない。
   // 送らないとき：公開URL以外／「送らないようにする」を押したとき／ブラウザの「追跡しない」（DNT・GPC）がオンのとき
-  var COUNTER_URL = '';
+  var COUNTER_URL = 'https://script.google.com/macros/s/AKfycbw5hLZfocHHSr7gFTrMAI_UL_EJNVPL8Pi8zG0BJ39n8amavnXcdHqCdp6Ujz2Qa_A/exec';
   var APP_ID = 'tsuzuku-66days', APP_V = '1.1', PUBLIC_HOST = 'omicreate.github.io';
   var COUNT_OFF = 'tsuzuku-count-off', SRC_KEY = 'tsuzuku-src';
   function cleanSrc(v) { return v && /^[A-Za-z0-9_-]{1,40}$/.test(v) ? v : ''; }
