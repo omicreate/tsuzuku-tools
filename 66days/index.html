@@ -150,6 +150,8 @@ details.tips[open] summary svg { transform:rotate(180deg); }
 
 footer { font-size:12px; color:var(--muted); display:flex; flex-direction:column; gap:6px; padding-top:4px; }
 footer a { color:var(--ink); font-weight:700; text-underline-offset:3px; }
+footer button.link { all:unset; color:var(--ink); font-weight:700; text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+footer button.link:focus-visible { outline:3px solid var(--ink); outline-offset:2px; }
 
 .bar { position:fixed; left:0; right:0; bottom:0; padding:12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); background:var(--bg); border-top:1px solid var(--line); z-index:10; }
 .bar-inner { max-width:488px; margin:0 auto; }
@@ -360,7 +362,8 @@ dialog { overflow:auto; }
   </section>
 
   <footer>
-    <p>記録は、この端末のブラウザの中にだけ保存されます。どこにも送られません。通知もありません。</p>
+    <p id="dataNote">記録は、この端末のブラウザの中にだけ保存されます。どこにも送られません。通知もありません。</p>
+    <p id="countNote" hidden><span id="countText"></span> <button type="button" class="link" id="countToggle"></button></p>
     <p>習慣になるまでの日数は人によって大きくちがいます（研究では18日〜254日。長いほうは計算上の値）。66日は目安です。</p>
     <p>参考：Lally et al. (2010)／Fournier et al. (2017)／Singh et al. (2024)／Stawarz et al. (2015)</p>
     <p>つくった人：つづくラボ（研究でわかった、続く仕組み。）</p>
@@ -932,6 +935,54 @@ dialog { overflow:auto; }
   });
 
   document.addEventListener('visibilitychange', function () { if (!document.hidden && state && $('setup').hidden) render(); });
+
+  // ---- 開いた回数を数える（だれか分からない形。記録の中身は送らない）----
+  // 送り先は tools/metrics/受け口.gs（スプレッドシート tsuzuku_lab_数値集計）。COUNTER_URL が空のあいだは何も送らない。
+  // 送るもの：道具の名前・リンクの印（?src=）・ホーム画面から開いたか・アプリの版。名前・記録・端末ID・Cookie・位置は送らない。
+  // 送らないとき：公開URL以外／「送らないようにする」を押したとき／ブラウザの「追跡しない」（DNT・GPC）がオンのとき
+  var COUNTER_URL = '';
+  var APP_ID = 'tsuzuku-66days', APP_V = '1.1', PUBLIC_HOST = 'omicreate.github.io';
+  var COUNT_OFF = 'tsuzuku-count-off', SRC_KEY = 'tsuzuku-src';
+  function cleanSrc(v) { return v && /^[A-Za-z0-9_-]{1,40}$/.test(v) ? v : ''; }
+  function readSource() { // ?src= を読んで覚え、アドレスからは消す（そのURLを人に送っても、印が広がらないように）
+    var src = '';
+    try {
+      var u = new URL(location.href), v = cleanSrc(u.searchParams.get('src'));
+      if (u.searchParams.has('src')) { u.searchParams.delete('src'); history.replaceState(history.state, '', u.pathname + u.search + u.hash); }
+      if (v) sessionStorage.setItem(SRC_KEY, v);
+      src = v || cleanSrc(sessionStorage.getItem(SRC_KEY));
+    } catch (e) {}
+    return src;
+  }
+  function countOff() { try { return localStorage.getItem(COUNT_OFF) === '1'; } catch (e) { return false; } }
+  function noTrack() { return navigator.doNotTrack === '1' || navigator.globalPrivacyControl === true; }
+  function counterReady() { return !!COUNTER_URL && location.hostname === PUBLIC_HOST; }
+  function countOpen(src) {
+    if (!counterReady() || countOff() || noTrack()) return;
+    var url = COUNTER_URL + '?app=' + APP_ID + '&ev=open&v=' + APP_V + '&pwa=' + (isStandalone() ? '1' : '0') + (src ? '&src=' + src : '');
+    try {
+      if (navigator.sendBeacon && navigator.sendBeacon(url)) return; // 本文なしの POST。受け口は URL の引数だけを読む
+      fetch(url, { method: 'POST', mode: 'no-cors', credentials: 'omit', cache: 'no-store', keepalive: true, referrerPolicy: 'no-referrer' }).catch(function () {});
+    } catch (e) {}
+  }
+  function renderCountNote() {
+    var on = counterReady();
+    $('countNote').hidden = !on;
+    $('dataNote').textContent = on ? '記録は、この端末のブラウザの中にだけ保存されます。記録はどこにも送りません。通知もありません。' : '記録は、この端末のブラウザの中にだけ保存されます。どこにも送られません。通知もありません。';
+    if (!on) return;
+    $('countText').textContent = noTrack() ? 'ブラウザの「追跡しない」がオンなので、アプリを開いたことも送っていません。'
+      : countOff() ? 'いまは、アプリを開いたことも送っていません。'
+      : 'アプリを開いたことだけを、だれか分からない形で数えています。送るのは、どのリンクから来たか・ホーム画面から開いたか・アプリの版です。名前・記録・端末ID・位置は送りません。';
+    $('countToggle').hidden = noTrack();
+    $('countToggle').textContent = countOff() ? '送ってもよい' : '送らないようにする';
+  }
+  $('countToggle').addEventListener('click', function () {
+    try { if (countOff()) localStorage.removeItem(COUNT_OFF); else localStorage.setItem(COUNT_OFF, '1'); } catch (e) {}
+    renderCountNote();
+  });
+  var SRC = readSource();
+  renderCountNote();
+  countOpen(SRC);
 
   render();
   // 新しい版が届いたら、1回だけ自動で読み込み直す（古い画面が残らないように）
