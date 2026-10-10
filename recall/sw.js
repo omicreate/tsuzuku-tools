@@ -1,11 +1,10 @@
-// 一度開いたら、電波がなくても使えるようにする（記録は端末の中なので通信は不要）
-// 古い版を消すのは、この道具の分（66days-）だけ。同じサイトのほかの道具（recall など）の保存は消さない（2026-10-10）
+// 一度開いたら、電波がなくても使えるようにする（記録は端末の中なので通信は不要）。作りは ../66days/sw.js と同じ
 // 画面（HTML）はネットを先に見て、つながらないときだけ保存しておいた版を出す。更新がすぐ届くようにするため。
-const CACHE = '66days-v8';
+const CACHE = 'recall-v1';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => {
-  e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k.startsWith('66days-') && k !== CACHE).map((k) => caches.delete(k)))));
+  e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k.startsWith('recall-') && k !== CACHE).map((k) => caches.delete(k)))));
   self.clients.claim();
 });
 self.addEventListener('fetch', (e) => {

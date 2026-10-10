@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>閉じて思い出す｜つづくラボ</title>
+<meta name="description" content="読み返すより、閉じて思い出す。1回読んだら閉じて、3分で書き出し、開いて見直すアプリ。2日たつと「もう一度思い出す」に出てきます。記録はこの端末にだけ保存されます。">
+<meta name="theme-color" content="#F3F6FA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F1724" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@700;900&family=Noto+Sans+JP:wght@400;500;700&family=DM+Mono&display=swap">
+<style>
+/* つづくラボ デザインシステムに準拠（お手本は ../66days/）。片手で使う1列の画面。主役は「もう一度思い出す」と、画面下の「思い出す練習を始める」 */
+:root {
+  --bg:#F3F6FA; --surface:#FFFFFF; --fg:#18263B; --muted:#56677F; --line:#D3DDEA;
+  --ink:#2C5F9E; --ink-strong:#1F4A80; --ink-soft:#E3ECF7; --on-ink:#FFFFFF; --danger:#B4232C; --shadow:0 8px 24px rgba(24,38,59,.08);
+  --display:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif;
+  --body:"Noto Sans JP","Hiragino Sans","Yu Gothic",sans-serif;
+  --mono:"DM Mono",ui-monospace,monospace;
+  --bar-h:92px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg:#0F1724; --surface:#172234; --fg:#E6EDF6; --muted:#A3B3C8; --line:#2B3B53; --ink:#7FB0EC; --ink-strong:#A6C8F2; --ink-soft:#1C2E47; --on-ink:#0F1724; --danger:#F08A90; --shadow:0 8px 24px rgba(0,0,0,.35); color-scheme:dark; }
+}
+:root[data-theme="dark"] { --bg:#0F1724; --surface:#172234; --fg:#E6EDF6; --muted:#A3B3C8; --line:#2B3B53; --ink:#7FB0EC; --ink-strong:#A6C8F2; --ink-soft:#1C2E47; --on-ink:#0F1724; --danger:#F08A90; --shadow:0 8px 24px rgba(0,0,0,.35); color-scheme:dark; }
+
+* { box-sizing:border-box; }
+[hidden] { display:none !important; }
+html, body { margin:0; }
+body { background:var(--bg); color:var(--fg); font-family:var(--body); font-size:16px; line-height:1.7; -webkit-tap-highlight-color:transparent; }
+.wrap { max-width:520px; margin:0 auto; padding-inline:16px; padding-block:calc(12px + env(safe-area-inset-top, 0px)) calc(var(--bar-h) + 40px + env(safe-area-inset-bottom, 0px)); display:flex; flex-direction:column; gap:14px; }
+
+.top { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:48px; }
+.brand { display:flex; flex-direction:column; line-height:1.2; }
+.brand small { font-family:var(--mono); font-size:11px; letter-spacing:.22em; color:var(--muted); }
+.brand b { font-family:var(--display); font-weight:900; font-size:20px; }
+.icon-btn { width:48px; height:48px; border-radius:14px; border:1px solid var(--line); background:var(--surface); color:var(--fg); display:grid; place-items:center; cursor:pointer; }
+.icon-btn svg { width:22px; height:22px; }
+
+.card { background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:18px; display:flex; flex-direction:column; gap:12px; }
+.card.accent { border:2px solid var(--ink); }
+h1, h2 { font-family:var(--display); margin:0; text-wrap:balance; word-break:keep-all; overflow-wrap:anywhere; }
+h1 { font-size:clamp(26px, 7.6vw, 32px); line-height:1.3; }
+h2 { font-size:19px; line-height:1.4; }
+p { margin:0; }
+.muted { color:var(--muted); }
+.small { font-size:14px; }
+.label { font-size:13px; font-weight:700; color:var(--muted); }
+button { font:inherit; cursor:pointer; }
+button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible, a:focus-visible { outline:3px solid var(--ink); outline-offset:2px; }
+.btn { min-height:48px; padding:10px 16px; border-radius:14px; border:1px solid var(--line); background:var(--surface); color:var(--fg); font-weight:700; }
+.btn-primary { background:var(--ink); border-color:var(--ink); color:var(--on-ink); }
+.btn-primary:disabled { opacity:.45; cursor:default; }
+.btn-danger { background:var(--danger); border-color:var(--danger); color:#fff; }
+.btn-text { background:none; border:none; color:var(--ink); font-weight:700; min-height:44px; padding:8px 10px; }
+.btn-big { min-height:60px; border-radius:20px; font-family:var(--display); font-weight:900; font-size:19px; }
+.form-actions { display:flex; gap:10px; }
+.form-actions .btn { flex:1; }
+.tip { display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border-radius:14px; background:var(--ink-soft); font-size:14px; line-height:1.6; }
+.tip svg { width:20px; height:20px; flex:none; margin-top:2px; color:var(--ink-strong); }
+.err { color:var(--danger); font-size:14px; font-weight:700; }
+
+/* 使い方の3つ */
+.rules { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px; counter-reset:r; }
+.rules li { display:grid; grid-template-columns:30px 1fr; gap:4px; }
+.rules li::before { counter-increment:r; content:counter(r); font-family:var(--display); font-weight:900; font-size:22px; color:var(--ink); line-height:1.3; }
+.rules b { display:block; }
+.rules span { color:var(--muted); font-size:14px; }
+
+/* もう一度思い出す・これまで */
+.list { display:flex; flex-direction:column; gap:8px; }
+.row { display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:16px; border:1px solid var(--line); background:var(--bg); }
+.row .what { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; text-align:left; background:none; border:none; padding:0; color:var(--fg); }
+.row .what b { font-size:16px; overflow-wrap:anywhere; }
+.row .what small { font-size:13px; color:var(--muted); word-break:keep-all; overflow-wrap:anywhere; }
+.row .go { flex:none; min-height:44px; padding:8px 16px; border-radius:14px; border:1.5px solid var(--ink); background:var(--surface); color:var(--ink-strong); font-weight:700; }
+.due .row { background:var(--surface); border:2px solid var(--ink); }
+.due .row .go { background:var(--ink); color:var(--on-ink); border-color:var(--ink); }
+.amount { display:inline-flex; gap:3px; vertical-align:-2px; margin-right:4px; }
+.amount i { width:10px; height:10px; border-radius:3px; border:1.5px solid var(--ink); display:block; }
+.amount i.on { background:var(--ink); }
+.empty-note { font-size:14px; color:var(--muted); }
+
+.notice { display:flex; gap:12px; align-items:flex-start; border:1px solid var(--ink); background:var(--surface); border-radius:16px; padding:14px; }
+.notice p { flex:1; font-size:14px; }
+.notice b { display:block; font-size:15px; }
+
+footer { font-size:12px; color:var(--muted); display:flex; flex-direction:column; gap:6px; padding-top:4px; }
+footer a { color:var(--ink); font-weight:700; text-underline-offset:3px; }
+footer button.link { all:unset; color:var(--ink); font-weight:700; text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+footer button.link:focus-visible { outline:3px solid var(--ink); outline-offset:2px; }
+
+.bar { position:fixed; left:0; right:0; bottom:0; padding:12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); background:var(--bg); border-top:1px solid var(--line); z-index:10; }
+.bar-inner { max-width:488px; margin:0 auto; }
+.main-btn { width:100%; min-height:68px; border-radius:20px; border:2px solid var(--ink); background:var(--ink); color:var(--on-ink); font-family:var(--display); font-weight:900; font-size:21px; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:var(--shadow); }
+.main-btn svg { width:26px; height:26px; flex:none; }
+
+/* 練習の流れ（画面いっぱい） */
+.flow { position:fixed; inset:0; z-index:30; overflow:auto; background:var(--bg); display:flex; padding:calc(16px + env(safe-area-inset-top, 0px)) 16px calc(24px + env(safe-area-inset-bottom, 0px)); }
+.flow-card { width:100%; max-width:440px; margin:auto; display:flex; flex-direction:column; gap:16px; }
+.flow-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.steps { display:flex; gap:6px; flex:1; }
+.steps i { flex:1; height:6px; border-radius:999px; background:var(--line); display:block; }
+.steps i.on { background:var(--ink); }
+.flow .what-now { font-family:var(--display); font-weight:900; font-size:clamp(17px, 4.8vw, 19px); color:var(--ink-strong); overflow-wrap:anywhere; }
+.flow h2 { font-size:clamp(21px, 6.4vw, 28px); line-height:1.35; }
+.flow .lead { font-size:16px; }
+.flow .btn { width:100%; }
+input[type="text"], textarea { font:inherit; color:var(--fg); background:var(--surface); border:1.5px solid var(--line); border-radius:14px; padding:12px 14px; min-height:52px; width:100%; }
+textarea { min-height:120px; resize:vertical; }
+textarea.code { font-family:var(--mono); font-size:13px; min-height:96px; background:var(--bg); }
+.chips { display:flex; gap:8px; overflow-x:auto; padding:2px 2px 4px; margin-inline:-2px; scrollbar-width:none; }
+.chips::-webkit-scrollbar { display:none; }
+.chip { flex:none; min-height:40px; padding:6px 14px; border-radius:999px; border:1px solid var(--line); background:var(--surface); color:var(--fg); font-size:14px; font-weight:500; white-space:nowrap; }
+.chip[aria-pressed="true"] { border-color:var(--ink); background:var(--ink-soft); color:var(--ink-strong); font-weight:700; }
+.book { display:flex; align-items:center; gap:14px; padding:14px; border-radius:16px; background:var(--ink-soft); }
+.book svg { width:44px; height:44px; flex:none; color:var(--ink-strong); }
+.book p { font-size:15px; line-height:1.6; }
+.ring { position:relative; width:min(220px, 60vw); aspect-ratio:1 / 1; margin:0 auto; }
+.ring > svg { width:100%; height:100%; transform:rotate(-90deg); }
+.ring circle { fill:none; stroke-width:8; }
+.ring .ring-bg { stroke:var(--ink-soft); }
+.ring .ring-fg { stroke:var(--ink); stroke-linecap:round; transition:stroke-dashoffset .25s linear; }
+.ring-time { position:absolute; inset:0; display:grid; place-items:center; font-family:var(--mono); font-size:clamp(42px, 13vw, 52px); color:var(--fg); font-variant-numeric:tabular-nums; }
+details.paper summary { cursor:pointer; color:var(--ink); font-weight:700; min-height:44px; display:flex; align-items:center; list-style:none; }
+details.paper summary::-webkit-details-marker { display:none; }
+.choice3 { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; }
+.choice3 button { min-height:76px; border-radius:16px; border:1.5px solid var(--line); background:var(--surface); color:var(--fg); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; font-family:var(--display); font-weight:900; font-size:clamp(14px, 4.4vw, 17px); padding:8px 4px; white-space:nowrap; }
+.choice3 button .amount i { width:12px; height:12px; }
+.choice3 button[aria-checked="true"] { background:var(--ink-soft); border:2px solid var(--ink); color:var(--ink-strong); box-shadow:var(--shadow); }
+.ok-note { padding:12px 14px; border-radius:14px; background:var(--ink-soft); font-size:15px; line-height:1.6; }
+
+.toast { position:fixed; left:16px; right:16px; bottom:calc(var(--bar-h) + 28px + env(safe-area-inset-bottom, 0px)); max-width:488px; margin:0 auto; background:var(--fg); color:var(--bg); border-radius:14px; padding:6px 6px 6px 16px; min-height:52px; display:flex; align-items:center; justify-content:space-between; gap:12px; box-shadow:var(--shadow); z-index:40; font-size:15px; }
+.toast .btn-text { color:var(--bg); text-decoration:underline; flex:none; white-space:nowrap; }
+
+dialog { border:none; border-radius:24px 24px 0 0; padding:0; width:100%; max-width:520px; margin:auto auto 0; background:var(--surface); color:var(--fg); max-height:85vh; overflow:auto; }
+dialog::backdrop { background:rgba(15,23,36,.45); }
+.sheet { padding:18px 16px calc(18px + env(safe-area-inset-bottom, 0px)); display:flex; flex-direction:column; gap:8px; }
+.sheet h2 { font-size:18px; padding:4px 4px 8px; overflow-wrap:anywhere; }
+.sheet .item { width:100%; text-align:left; min-height:56px; padding:12px 14px; border-radius:14px; border:none; background:transparent; color:var(--fg); font-weight:700; display:flex; flex-direction:column; justify-content:center; text-decoration:none; }
+.sheet .item small { font-weight:400; color:var(--muted); font-size:13px; }
+.sheet .item:hover { background:var(--bg); }
+.sheet .item.danger { color:var(--danger); }
+.hist { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
+.hist li { padding:10px 12px; border-radius:12px; background:var(--bg); font-size:14px; }
+.hist li pre { margin:6px 0 0; white-space:pre-wrap; font-family:var(--body); font-size:13px; color:var(--muted); }
+.len3 { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; }
+.len3 button { min-height:56px; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); color:var(--fg); font-family:var(--display); font-weight:900; font-size:18px; }
+.len3 button[aria-checked="true"] { background:var(--ink-soft); border:2px solid var(--ink); color:var(--ink-strong); }
+
+/* 印刷：紙の書き出し用紙だけを出す */
+.print-sheet { display:none; }
+@media print {
+  body { background:#fff; color:#000; }
+  .wrap, .bar, .flow, .toast, dialog { display:none !important; }
+  .print-sheet { display:block; font-family:var(--body); color:#000; padding:0 4mm; }
+  .print-sheet h1 { font-size:20pt; }
+  .print-sheet .ps-row { display:flex; gap:8mm; margin:4mm 0; font-size:11pt; }
+  .print-sheet .ps-row span { flex:1; border-bottom:1px solid #555; padding-bottom:1mm; }
+  .print-sheet .lines { height:150mm; border:1px solid #777; border-radius:4mm; background:repeating-linear-gradient(#fff 0 9mm, #bbb 9mm calc(9mm + 1px)); margin:3mm 0; }
+  .print-sheet ol { margin:2mm 0 0; padding-left:6mm; font-size:10.5pt; }
+  .print-sheet .boxes { font-size:11pt; margin-top:3mm; }
+  .print-sheet .src { font-size:8pt; color:#444; margin-top:4mm; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation:none !important; transition:none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+
+  <div class="top">
+    <div class="brand"><small>TSUZUKU LAB</small><b>閉じて思い出す</b></div>
+    <button type="button" class="icon-btn" id="menuBtn" aria-label="メニュー"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  </div>
+
+  <!-- はじめて開いたとき：使い方 -->
+  <section class="card" id="intro">
+    <h1>読み返すより、<wbr>閉じて思い出す。</h1>
+    <ol class="rules">
+      <li><div><b>覚えたいところを、1回読む</b><span>読み返すのは、1回だけ。</span></div></li>
+      <li><div><b>閉じて、紙にぜんぶ書き出す</b><span>タイマーは目安の3分。きれいに書かなくていい。</span></div></li>
+      <li><div><b>開いて、書けなかったところを見直す</b><span>思い出せた量を、3つから選んで残します。</span></div></li>
+    </ol>
+    <p class="small muted">2日たつと、同じところが「もう一度思い出す」に出てきます。そのときは読まずに、閉じたまま思い出します。</p>
+  </section>
+
+  <!-- いちばん上：今日、もう一度思い出すもの -->
+  <section class="card due" id="dueCard" hidden>
+    <h2>もう一度思い出す</h2>
+    <p class="small muted">今回は読みません。閉じたまま、思い出して書き出します。</p>
+    <div class="list" id="dueList"></div>
+  </section>
+
+  <!-- 研究の一言 -->
+  <div class="tip" id="research">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>
+    <p>何度も読むと、覚えた気になります。でも1週間後に多く覚えていたのは、閉じて思い出したほうでした（2006年の実験。4回読んだ人 40%、1回読んで3回思い出した人 61%）。</p>
+  </div>
+
+  <div class="notice" id="homeNotice" hidden>
+    <p><b>ホーム画面に入れておくと安心です</b>iPhone は、Safari の共有ボタン（□に↑）→「ホーム画面に追加」。ブラウザのまま使うと、しばらく開かないうちに記録が消えることがあります。</p>
+    <button type="button" class="btn-text" id="homeNoticeClose">とじる</button>
+  </div>
+
+  <section class="card" id="pastCard" hidden>
+    <h2>これまで</h2>
+    <div class="list" id="pastList"></div>
+  </section>
+
+  <footer>
+    <p id="dataNote">記録は、この端末のブラウザの中にだけ保存されます。どこにも送られません。通知もありません。</p>
+    <p id="countNote" hidden><span id="countText"></span> <button type="button" class="link" id="countToggle"></button></p>
+    <p>「3分」と「2日」は目安です。研究で決まった数字ではありません。どれくらい間をあけるといいかは、第4回の動画で話します。</p>
+    <p>参考：Roediger &amp; Karpicke (2006)／Rowland (2014)／Adesope et al. (2017)／Dunlosky et al. (2013)</p>
+    <p><a href="../66days/">習慣にするなら：66日チェック</a>　<a href="../">道具箱</a></p>
+    <p><a href="https://www.youtube.com/@tsuzukulab" target="_blank" rel="noopener">YouTubeで動画を見る（@tsuzukulab）</a></p>
+  </footer>
+</div>
+
+<div class="bar" id="bar">
+  <div class="bar-inner">
+    <button type="button" class="main-btn" id="startBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M9 8h7M9 12h5"/></svg>思い出す練習を始める</button>
+  </div>
+</div>
+
+<!-- 練習の流れ：何を → 1回読む → 閉じて書き出す（タイマー）→ 開いて見直す・残す -->
+<div class="flow" id="flow" role="dialog" aria-modal="true" aria-labelledby="flowTitle" hidden>
+  <div class="flow-card">
+    <div class="flow-head">
+      <div class="steps" id="steps" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <button type="button" class="btn-text" id="flowQuit">やめる</button>
+    </div>
+    <p class="what-now" id="whatNow" hidden></p>
+
+    <div id="stWhat">
+      <div style="display:flex; flex-direction:column; gap:12px">
+        <h2 id="flowTitle">何を覚えますか？</h2>
+        <input type="text" id="what" maxlength="60" autocomplete="off" placeholder="例：英単語 p.20〜25" aria-label="覚えるところ">
+        <div class="chips" id="whatChips">
+          <button type="button" class="chip">英単語の1ページ</button>
+          <button type="button" class="chip">資格テキストの1ページ</button>
+          <button type="button" class="chip">本の1章</button>
+          <button type="button" class="chip">授業のノート</button>
+          <button type="button" class="chip">会議のメモ</button>
+        </div>
+        <p class="err" id="whatErr" role="alert" hidden>覚えるところを、ひとことで書いてください。</p>
+        <button type="button" class="btn btn-primary btn-big" id="whatNext">次へ</button>
+      </div>
+    </div>
+
+    <div id="stRead" hidden>
+      <div style="display:flex; flex-direction:column; gap:14px">
+        <h2 id="readTitle">まず、1回だけ読む</h2>
+        <div class="book">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5h7a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H2zM22 5h-7a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h8z"/></svg>
+          <p id="readLead">読み終えたら、本やノートを閉じてください。読み返すのは、1回だけで大丈夫です。</p>
+        </div>
+        <button type="button" class="btn btn-primary btn-big" id="readNext">閉じた。書き出す</button>
+      </div>
+    </div>
+
+    <div id="stWrite" hidden>
+      <div style="display:flex; flex-direction:column; gap:14px">
+        <h2>覚えていることを、<wbr>紙にぜんぶ書き出す</h2>
+        <p class="lead muted">きれいに書かなくていい。単語だけでも大丈夫です。</p>
+        <div class="ring">
+          <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="ring-bg" cx="60" cy="60" r="54"/><circle class="ring-fg" id="ringFg" cx="60" cy="60" r="54"/></svg>
+          <span class="ring-time" id="timeText" role="timer" aria-live="off">3:00</span>
+        </div>
+        <p class="muted small" id="timeMsg" role="status" style="text-align:center">時間になったら、小さく音が鳴ります（マナーモードでは鳴らないことがあります）。</p>
+        <details class="paper" id="paper">
+          <summary>紙がないときは、ここに書く</summary>
+          <textarea id="memo" placeholder="思い出したことを、ここに" aria-label="思い出したことを書く"></textarea>
+          <p class="small muted">ここに書いたことも、この端末の中にだけ残ります。</p>
+        </details>
+        <button type="button" class="btn btn-primary btn-big" id="writeNext">書けた。開いて見直す</button>
+      </div>
+    </div>
+
+    <div id="stCheck" hidden>
+      <div style="display:flex; flex-direction:column; gap:14px">
+        <h2>開いて、<wbr>書けなかったところを見直す</h2>
+        <p class="lead muted">見直したら、思い出せた量を選んでください。</p>
+        <div class="choice3" role="radiogroup" aria-label="思い出せた量" id="amountPick">
+          <button type="button" role="radio" aria-checked="false" data-a="3"><span class="amount" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i></span>ぜんぶ</button>
+          <button type="button" role="radio" aria-checked="false" data-a="2"><span class="amount" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i></span>半分くらい</button>
+          <button type="button" role="radio" aria-checked="false" data-a="1"><span class="amount" aria-hidden="true"><i class="on"></i><i></i><i></i></span>少し</button>
+        </div>
+        <p class="ok-note">「少し」でも、だいじょうぶ。書けなかったところが、次に見直す場所です。</p>
+        <button type="button" class="btn btn-primary btn-big" id="saveBtn" disabled>残す</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" hidden><span id="toastText"></span><button type="button" class="btn-text" id="toastUndo">元に戻す</button></div>
+
+<dialog id="menu" aria-labelledby="menuTitle">
+  <div class="sheet" id="menuMain">
+    <h2 id="menuTitle">メニュー</h2>
+    <button type="button" class="item" id="mLen">タイマーの長さ<small id="mLenNow">いまは3分</small></button>
+    <button type="button" class="item" id="mPrint">書き出し用紙を印刷する<small>紙に書くときの用紙です。使い方の3つも入っています</small></button>
+    <button type="button" class="item" id="mBackup">記録をバックアップする<small>文字のかたまりをコピーして、メモ帳などに貼っておく</small></button>
+    <button type="button" class="item" id="mRestore">バックアップから戻す<small>機種変更したときや、記録が消えたときに</small></button>
+    <a class="item" href="../66days/">66日チェックを開く<small>習慣を、1日1タップで記録する道具</small></a>
+    <button type="button" class="item danger" id="mReset">記録をすべて消す</button>
+    <button type="button" class="btn" id="mClose">閉じる</button>
+  </div>
+  <div class="sheet" id="menuLen" hidden>
+    <h2>タイマーの長さ</h2>
+    <p class="small muted">「これならできる」と思える長さで。研究で決まった長さではありません。</p>
+    <div class="len3" role="radiogroup" aria-label="タイマーの長さ" id="lenPick">
+      <button type="button" role="radio" aria-checked="false" data-m="1">1分</button>
+      <button type="button" role="radio" aria-checked="false" data-m="3">3分</button>
+      <button type="button" role="radio" aria-checked="false" data-m="5">5分</button>
+    </div>
+    <div class="form-actions"><button type="button" class="btn" data-back>もどる</button></div>
+  </div>
+  <div class="sheet" id="menuItem" hidden>
+    <h2 id="itemTitle"></h2>
+    <p class="small muted" id="itemNext"></p>
+    <ul class="hist" id="itemHist"></ul>
+    <button type="button" class="btn btn-primary" id="itemGo">もう一度思い出す</button>
+    <button type="button" class="item" id="itemRename">名前を変える</button>
+    <button type="button" class="item" id="itemRest">もう出さない<small>「もう一度思い出す」に出さないようにします。記録は残ります</small></button>
+    <button type="button" class="item danger" id="itemDelete">この記録を消す</button>
+    <div class="form-actions"><button type="button" class="btn" data-back-close>閉じる</button></div>
+  </div>
+  <div class="sheet" id="menuRename" hidden>
+    <h2>名前を変える</h2>
+    <input type="text" id="renameText" maxlength="60" autocomplete="off" aria-label="新しい名前">
+    <div class="form-actions"><button type="button" class="btn" id="renameBack">もどる</button><button type="button" class="btn btn-primary" id="renameOk">変える</button></div>
+  </div>
+  <div class="sheet" id="menuDelete" hidden>
+    <h2>この記録を消しますか？</h2>
+    <p id="deleteText">消した記録は戻せません。</p>
+    <div class="form-actions"><button type="button" class="btn" id="deleteBack">やめる</button><button type="button" class="btn btn-danger" id="deleteYes">消す</button></div>
+  </div>
+  <div class="sheet" id="menuBackup" hidden>
+    <h2>記録のバックアップ</h2>
+    <textarea class="code" id="backupText" readonly aria-label="バックアップの文字"></textarea>
+    <p id="backupMsg" class="small muted">この文字をコピーして、メモ帳などに貼っておいてください。</p>
+    <div class="form-actions"><button type="button" class="btn" data-back>もどる</button><button type="button" class="btn btn-primary" id="copyBtn">コピーする</button></div>
+  </div>
+  <div class="sheet" id="menuRestore" hidden>
+    <h2>バックアップから戻す</h2>
+    <textarea class="code" id="restoreText" aria-label="バックアップの文字を貼り付ける" placeholder="ここにバックアップの文字を貼り付け"></textarea>
+    <p class="err" id="restoreErr" role="alert" hidden></p>
+    <div class="form-actions"><button type="button" class="btn" data-back>もどる</button><button type="button" class="btn btn-primary" id="restoreBtn">この記録に戻す</button></div>
+  </div>
+  <div class="sheet" id="menuReset" hidden>
+    <h2>記録をすべて消しますか？</h2>
+    <p>これまでの記録がすべて消えます。消した記録は戻せません。心配なら、先にバックアップしてください。</p>
+    <div class="form-actions"><button type="button" class="btn" data-back>やめる</button><button type="button" class="btn btn-danger" id="resetYes">すべて消す</button></div>
+  </div>
+</dialog>
+
+<!-- 印刷する紙：書き出し用紙 -->
+<section class="print-sheet" aria-hidden="true">
+  <div style="font-family:var(--mono); font-size:8pt; letter-spacing:.2em">TSUZUKU LAB</div>
+  <h1>閉じて思い出す｜書き出し用紙</h1>
+  <div class="ps-row"><span>日付：　　月　　日</span><span>覚えるところ：</span></div>
+  <ol>
+    <li>覚えたいところを、1回読む</li>
+    <li>閉じて、覚えていることを下にぜんぶ書き出す（目安の3分。きれいに書かなくていい）</li>
+    <li>開いて、書けなかったところを見直す</li>
+  </ol>
+  <div class="lines"></div>
+  <div class="boxes">思い出せた量：　□ ぜんぶ　　□ 半分くらい　　□ 少し　　　　もう一度思い出す日（2日後・目安）：　　月　　日</div>
+  <div class="src">何度も読むと、覚えた気になります。1週間後に多く覚えていたのは、閉じて思い出したほうでした（Roediger &amp; Karpicke, 2006）。つづくラボ｜研究でわかった、続く仕組み。</div>
+</section>
+
+<script>
+(function () {
+  var KEY = 'tsuzuku-recall-v1', AGAIN_DAYS = 2;
+  var AMOUNT = { 3: 'ぜんぶ', 2: '半分くらい', 1: '少し' };
+  var $ = function (id) { return document.getElementById(id); };
+  var state = load();
+  var toastTimer = null, lastUndo = null, menuItemId = null;
+
+  function blank() { return { v: 1, items: [], min: 3, noticeClosed: false }; }
+  function load() {
+    try {
+      var s = JSON.parse(localStorage.getItem(KEY));
+      if (s && s.v === 1 && Array.isArray(s.items)) { if (!s.min) s.min = 3; return s; }
+    } catch (e) {}
+    return blank();
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  function ymd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function parseYmd(s) { var p = String(s).split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); }
+  function today() { return ymd(new Date()); }
+  function addDays(s, n) { var d = parseYmd(s); d.setDate(d.getDate() + n); return ymd(d); }
+  function md(s) { var d = parseYmd(s); return (d.getMonth() + 1) + '/' + d.getDate(); }
+  function daysFrom(s) { return Math.round((parseYmd(s) - parseYmd(today())) / 86400000); }
+  function esc(t) { return String(t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function byId(id) { return state.items.filter(function (x) { return x.id === id; })[0]; }
+  function last(it) { return it.sessions[it.sessions.length - 1]; }
+  function isDue(it) { return !it.rest && it.next && it.next <= today(); }
+  function amountMark(a) { return '<span class="amount" aria-hidden="true">' + [1, 2, 3].map(function (k) { return '<i' + (k <= a ? ' class="on"' : '') + '></i>'; }).join('') + '</span>'; }
+  function nextText(it) {
+    if (it.rest) return 'もう出さない';
+    var n = daysFrom(it.next);
+    return n <= 0 ? '今日、もう一度' : n === 1 ? '明日（' + md(it.next) + '）にもう一度' : md(it.next) + '（' + n + '日後）にもう一度';
+  }
+
+  // ---- ホーム ----
+  function render() {
+    var items = state.items.slice();
+    var due = items.filter(isDue).sort(function (a, b) { return a.next < b.next ? -1 : 1; });
+    var past = items.filter(function (x) { return !isDue(x); }).sort(function (a, b) { return last(a).d < last(b).d ? 1 : -1; });
+    $('intro').hidden = items.length > 0;
+    $('dueCard').hidden = !due.length;
+    $('dueList').innerHTML = due.map(function (it) {
+      var s = last(it);
+      return '<div class="row"><button type="button" class="what" data-open="' + it.id + '"><b>' + esc(it.title) + '</b><small>' + amountMark(s.a) + md(s.d) + '：' + AMOUNT[s.a] + '</small></button>' +
+        '<button type="button" class="go" data-again="' + it.id + '">思い出す</button></div>';
+    }).join('');
+    $('pastCard').hidden = !past.length;
+    $('pastList').innerHTML = past.map(function (it) {
+      var s = last(it);
+      return '<div class="row"><button type="button" class="what" data-open="' + it.id + '"><b>' + esc(it.title) + '</b><small>' + amountMark(s.a) + md(s.d) + '：' + AMOUNT[s.a] + '・' + nextText(it) + '</small></button></div>';
+    }).join('');
+    $('homeNotice').hidden = !(isIOS() && !isStandalone() && items.length > 0 && !state.noticeClosed);
+    $('mLenNow').textContent = 'いまは' + state.min + '分';
+  }
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('[data-again]'); if (a) { startFlow(a.dataset.again); return; }
+    var o = e.target.closest('[data-open]'); if (o) openItem(o.dataset.open);
+  });
+  $('homeNoticeClose').addEventListener('click', function () { state.noticeClosed = true; save(); render(); });
+
+  // ---- 練習の流れ ----
+  var flow = null; // { id（もう一度のときの記録）, title, step, amount, memo }
+  function setStep(name) {
+    flow.step = name;
+    ['stWhat', 'stRead', 'stWrite', 'stCheck'].forEach(function (s) { $(s).hidden = s !== 'st' + name; });
+    var order = ['What', 'Read', 'Write', 'Check'], k = order.indexOf(name);
+    [].forEach.call($('steps').children, function (b, i) { b.classList.toggle('on', i <= k); });
+    $('whatNow').hidden = name === 'What';
+    $('whatNow').textContent = flow.title || '';
+    var first = { What: $('what'), Read: $('readNext'), Write: $('writeNext'), Check: $('amountPick').querySelector('button') }[name];
+    setTimeout(function () { try { first.focus({ preventScroll: true }); } catch (e) {} }, 30);
+  }
+  function startFlow(againId) {
+    var it = againId ? byId(againId) : null;
+    flow = { id: it ? it.id : null, title: it ? it.title : '', amount: 0, memo: '' };
+    $('what').value = ''; $('whatErr').hidden = true; $('memo').value = ''; $('paper').open = false;
+    [].forEach.call($('whatChips').children, function (c) { c.setAttribute('aria-pressed', 'false'); });
+    [].forEach.call($('amountPick').children, function (b) { b.setAttribute('aria-checked', 'false'); });
+    $('saveBtn').disabled = true;
+    if (it) { // もう一度：読まずに、閉じたまま思い出す
+      $('readTitle').textContent = '今回は、読まずに思い出す';
+      $('readLead').textContent = '本やノートは閉じたままです。前に読んだことを、そのまま書き出します。';
+      $('readNext').textContent = '閉じている。書き出す';
+    } else {
+      $('readTitle').textContent = 'まず、1回だけ読む';
+      $('readLead').textContent = '読み終えたら、本やノートを閉じてください。読み返すのは、1回だけで大丈夫です。';
+      $('readNext').textContent = '閉じた。書き出す';
+    }
+    closeMenu();
+    $('flow').hidden = false; document.body.style.overflow = 'hidden';
+    setStep(it ? 'Read' : 'What');
+  }
+  function endFlow() { stopTimer(); $('flow').hidden = true; document.body.style.overflow = ''; flow = null; }
+  $('startBtn').addEventListener('click', function () { startFlow(null); });
+  $('flowQuit').addEventListener('click', endFlow);
+  $('whatChips').addEventListener('click', function (e) {
+    var c = e.target.closest('.chip'); if (!c) return;
+    $('what').value = c.textContent; $('whatErr').hidden = true;
+    [].forEach.call($('whatChips').children, function (x) { x.setAttribute('aria-pressed', x === c ? 'true' : 'false'); });
+  });
+  $('what').addEventListener('input', function () { $('whatErr').hidden = true; [].forEach.call($('whatChips').children, function (x) { x.setAttribute('aria-pressed', x.textContent === $('what').value ? 'true' : 'false'); }); });
+  $('what').addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.isComposing) $('whatNext').click(); });
+  $('whatNext').addEventListener('click', function () {
+    var v = $('what').value.trim();
+    if (!v) { $('whatErr').hidden = false; $('what').focus(); return; }
+    flow.title = v; setStep('Read');
+  });
+  $('readNext').addEventListener('click', function () { prepareSound(); setStep('Write'); startTimer(); });
+  $('writeNext').addEventListener('click', function () { flow.memo = $('memo').value.trim(); stopTimer(); setStep('Check'); });
+  $('amountPick').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    flow.amount = Number(b.dataset.a);
+    [].forEach.call($('amountPick').children, function (x) { x.setAttribute('aria-checked', x === b ? 'true' : 'false'); });
+    $('saveBtn').disabled = false;
+  });
+  $('saveBtn').addEventListener('click', function () {
+    if (!flow || !flow.amount) return;
+    var before = JSON.stringify(state), d = today();
+    var session = { d: d, a: flow.amount, m: state.min };
+    if (flow.memo) session.note = flow.memo.slice(0, 2000);
+    var it = flow.id ? byId(flow.id) : null;
+    if (!it) { it = { id: newId(), title: flow.title, sessions: [] }; state.items.push(it); }
+    it.sessions.push(session); it.next = addDays(d, AGAIN_DAYS); delete it.rest;
+    save(); endFlow(); render();
+    showToast('残しました。' + md(it.next) + '（' + AGAIN_DAYS + '日後）に「もう一度思い出す」に出ます', function () { state = JSON.parse(before); save(); render(); });
+  });
+
+  // ---- タイマー（終わる時刻で数えるので、画面を消しても合う）----
+  var tEnd = 0, tTick = null, wake = null, audio = null, R = 2 * Math.PI * 54;
+  $('ringFg').style.strokeDasharray = R;
+  function mmss(ms) { var s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+  function keepAwake(on) {
+    try {
+      if (on && navigator.wakeLock && (!wake || wake.released)) navigator.wakeLock.request('screen').then(function (l) { wake = l; }, function () {});
+      if (!on && wake) { wake.release().catch(function () {}); wake = null; }
+    } catch (e) {}
+  }
+  function prepareSound() { try { var AC = window.AudioContext || window.webkitAudioContext; if (AC && !audio) audio = new AC(); if (audio && audio.resume) audio.resume(); } catch (e) {} }
+  function chime() {
+    try {
+      if (!audio) return;
+      [[784, 0], [1047, 0.18]].forEach(function (n) {
+        var o = audio.createOscillator(), g = audio.createGain(), t = audio.currentTime + n[1];
+        o.frequency.value = n[0]; o.type = 'sine'; o.connect(g); g.connect(audio.destination);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.18, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+        o.start(t); o.stop(t + 0.55);
+      });
+    } catch (e) {}
+  }
+  function tick() {
+    var left = tEnd - Date.now(), total = state.min * 60000;
+    $('timeText').textContent = mmss(left);
+    $('ringFg').style.strokeDashoffset = (R * (1 - Math.max(0, left) / total)).toFixed(1);
+    if (left <= 0) {
+      clearInterval(tTick); tTick = null; keepAwake(false); chime();
+      $('timeMsg').textContent = '時間です。書けたら、開いて見直しましょう。';
+      $('writeNext').textContent = '開いて見直す';
+    }
+  }
+  function startTimer() {
+    tEnd = Date.now() + state.min * 60000;
+    $('timeMsg').textContent = '時間になったら、小さく音が鳴ります（マナーモードでは鳴らないことがあります）。';
+    $('writeNext').textContent = '書けた。開いて見直す';
+    clearInterval(tTick); tTick = setInterval(tick, 250); tick(); keepAwake(true);
+  }
+  function stopTimer() { clearInterval(tTick); tTick = null; keepAwake(false); }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) { if (tTick) { tick(); keepAwake(true); } else if ($('flow').hidden) render(); } });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('flow').hidden) endFlow(); });
+
+  // ---- お知らせ（元に戻す） ----
+  function showToast(text, undo) {
+    $('toastText').textContent = text; lastUndo = undo || null; $('toastUndo').hidden = !undo; $('toast').hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { $('toast').hidden = true; lastUndo = null; }, text.length > 24 ? 7000 : 5000);
+  }
+  $('toastUndo').addEventListener('click', function () { if (lastUndo) lastUndo(); lastUndo = null; $('toast').hidden = true; });
+
+  // ---- メニュー ----
+  var menu = $('menu');
+  var SHEETS = ['menuMain', 'menuLen', 'menuItem', 'menuRename', 'menuDelete', 'menuBackup', 'menuRestore', 'menuReset'];
+  function sheet(id) { SHEETS.forEach(function (s) { $(s).hidden = s !== id; }); }
+  function openDialog() { if (!menu.open) { if (menu.showModal) menu.showModal(); else menu.setAttribute('open', ''); } }
+  function closeMenu() { if (menu.close) menu.close(); else menu.removeAttribute('open'); }
+  $('menuBtn').addEventListener('click', function () { render(); sheet('menuMain'); openDialog(); });
+  $('mClose').addEventListener('click', closeMenu);
+  menu.addEventListener('click', function (e) { if (e.target === menu) closeMenu(); });
+  menu.querySelectorAll('[data-back]').forEach(function (b) { b.addEventListener('click', function () { sheet('menuMain'); }); });
+  menu.querySelectorAll('[data-back-close]').forEach(function (b) { b.addEventListener('click', closeMenu); });
+  // タイマーの長さ
+  function renderLen() { [].forEach.call($('lenPick').children, function (b) { b.setAttribute('aria-checked', Number(b.dataset.m) === state.min ? 'true' : 'false'); }); }
+  $('mLen').addEventListener('click', function () { renderLen(); sheet('menuLen'); });
+  $('lenPick').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; state.min = Number(b.dataset.m); save(); renderLen(); render(); });
+  // 1つの記録
+  function openItem(id) {
+    var it = byId(id); if (!it) return;
+    menuItemId = id;
+    $('itemTitle').textContent = it.title;
+    $('itemNext').textContent = it.sessions.length + '回思い出しました。' + nextText(it) + (it.rest ? '' : '。');
+    $('itemHist').innerHTML = it.sessions.slice().reverse().map(function (s) {
+      return '<li>' + amountMark(s.a) + md(s.d) + '：' + AMOUNT[s.a] + '（' + s.m + '分）' + (s.note ? '<pre>' + esc(s.note) + '</pre>' : '') + '</li>';
+    }).join('');
+    $('itemRest').hidden = !!it.rest;
+    sheet('menuItem'); openDialog();
+  }
+  $('itemGo').addEventListener('click', function () { startFlow(menuItemId); });
+  $('itemRename').addEventListener('click', function () { $('renameText').value = byId(menuItemId).title; sheet('menuRename'); $('renameText').focus(); });
+  $('renameBack').addEventListener('click', function () { openItem(menuItemId); });
+  $('renameOk').addEventListener('click', function () { var v = $('renameText').value.trim(); if (!v) return; byId(menuItemId).title = v; save(); render(); openItem(menuItemId); });
+  $('itemRest').addEventListener('click', function () {
+    var it = byId(menuItemId), before = JSON.stringify(state); it.rest = true; save(); closeMenu(); render();
+    showToast('「もう一度思い出す」に出さないようにしました', function () { state = JSON.parse(before); save(); render(); });
+  });
+  $('itemDelete').addEventListener('click', function () { $('deleteText').textContent = '「' + byId(menuItemId).title + '」の記録（' + byId(menuItemId).sessions.length + '回分）が消えます。消した記録は戻せません。'; sheet('menuDelete'); });
+  $('deleteBack').addEventListener('click', function () { openItem(menuItemId); });
+  $('deleteYes').addEventListener('click', function () { state.items = state.items.filter(function (x) { return x.id !== menuItemId; }); save(); closeMenu(); render(); showToast('消しました', null); });
+  // 印刷
+  $('mPrint').addEventListener('click', function () { closeMenu(); setTimeout(function () { window.print(); }, 150); });
+  // バックアップと復元
+  $('mBackup').addEventListener('click', function () { $('backupText').value = JSON.stringify({ app: 'tsuzuku-recall', saved: today(), state: state }); $('backupMsg').textContent = 'この文字をコピーして、メモ帳などに貼っておいてください。'; sheet('menuBackup'); });
+  $('copyBtn').addEventListener('click', function () {
+    var t = $('backupText');
+    var done = function () { $('backupMsg').textContent = 'コピーしました。メモ帳などに貼っておいてください。'; };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t.value).then(done, function () { t.select(); try { document.execCommand('copy'); done(); } catch (e) {} });
+    else { t.select(); try { document.execCommand('copy'); done(); } catch (e) {} }
+  });
+  $('mRestore').addEventListener('click', function () { $('restoreText').value = ''; $('restoreErr').hidden = true; sheet('menuRestore'); });
+  $('restoreBtn').addEventListener('click', function () {
+    try {
+      var o = JSON.parse($('restoreText').value.trim()), s = o && o.state ? o.state : o;
+      if (!s || s.v !== 1 || !Array.isArray(s.items)) throw new Error('bad');
+      s.items.forEach(function (it) { if (!it.id || !it.title || !Array.isArray(it.sessions) || !it.sessions.length) throw new Error('bad'); });
+      if (!s.min) s.min = 3;
+      state = s; save(); closeMenu(); render(); showToast('バックアップから戻しました', null);
+    } catch (e) { $('restoreErr').textContent = 'バックアップの文字を読み取れませんでした。最初から最後まで、そのまま貼り付けてください。'; $('restoreErr').hidden = false; }
+  });
+  $('mReset').addEventListener('click', function () { sheet('menuReset'); });
+  $('resetYes').addEventListener('click', function () { var keep = state.min; state = blank(); state.min = keep; save(); closeMenu(); render(); showToast('すべて消しました', null); });
+
+  function isStandalone() { return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; }
+  function isIOS() { return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+
+  // ---- 開いた回数を数える（だれか分からない形。記録の中身は送らない。66日チェックと同じしくみ）----
+  // 送り先は tools/metrics/受け口.gs（スプレッドシート tsuzuku_lab_数値集計）。COUNTER_URL が空のあいだは何も送らない。
+  // 送るもの：道具の名前・リンクの印（?src=）・ホーム画面から開いたか・アプリの版。名前・記録・端末ID・Cookie・位置は送らない。
+  // 送らないとき：公開URL以外／「送らないようにする」を押したとき／ブラウザの「追跡しない」（DNT・GPC）がオンのとき
+  var COUNTER_URL = 'https://script.google.com/macros/s/AKfycbw5hLZfocHHSr7gFTrMAI_UL_EJNVPL8Pi8zG0BJ39n8amavnXcdHqCdp6Ujz2Qa_A/exec';
+  var APP_ID = 'tsuzuku-recall', APP_V = '1.0', PUBLIC_HOST = 'omicreate.github.io';
+  var COUNT_OFF = 'tsuzuku-count-off', SRC_KEY = 'tsuzuku-src';
+  function cleanSrc(v) { return v && /^[A-Za-z0-9_-]{1,40}$/.test(v) ? v : ''; }
+  function readSource() {
+    var src = '';
+    try {
+      var u = new URL(location.href), v = cleanSrc(u.searchParams.get('src'));
+      if (u.searchParams.has('src')) { u.searchParams.delete('src'); history.replaceState(history.state, '', u.pathname + u.search + u.hash); }
+      if (v) sessionStorage.setItem(SRC_KEY, v);
+      src = v || cleanSrc(sessionStorage.getItem(SRC_KEY));
+    } catch (e) {}
+    return src;
+  }
+  function countOff() { try { return localStorage.getItem(COUNT_OFF) === '1'; } catch (e) { return false; } }
+  function noTrack() { return navigator.doNotTrack === '1' || navigator.globalPrivacyControl === true; }
+  function counterReady() { return !!COUNTER_URL && location.hostname === PUBLIC_HOST; }
+  function countOpen(src) {
+    if (!counterReady() || countOff() || noTrack()) return;
+    var url = COUNTER_URL + '?app=' + APP_ID + '&ev=open&v=' + APP_V + '&pwa=' + (isStandalone() ? '1' : '0') + (src ? '&src=' + src : '');
+    try {
+      if (navigator.sendBeacon && navigator.sendBeacon(url)) return;
+      fetch(url, { method: 'POST', mode: 'no-cors', credentials: 'omit', cache: 'no-store', keepalive: true, referrerPolicy: 'no-referrer' }).catch(function () {});
+    } catch (e) {}
+  }
+  function renderCountNote() {
+    var on = counterReady();
+    $('countNote').hidden = !on;
+    $('dataNote').textContent = on ? '記録は、この端末のブラウザの中にだけ保存されます。記録はどこにも送りません。通知もありません。' : '記録は、この端末のブラウザの中にだけ保存されます。どこにも送られません。通知もありません。';
+    if (!on) return;
+    $('countText').textContent = noTrack() ? 'ブラウザの「追跡しない」がオンなので、アプリを開いたことも送っていません。'
+      : countOff() ? 'いまは、アプリを開いたことも送っていません。'
+      : 'アプリを開いたことだけを、だれか分からない形で数えています。送るのは、どのリンクから来たか・ホーム画面から開いたか・アプリの版です。名前・記録・端末ID・位置は送りません。';
+    $('countToggle').hidden = noTrack();
+    $('countToggle').textContent = countOff() ? '送ってもよい' : '送らないようにする';
+  }
+  $('countToggle').addEventListener('click', function () {
+    try { if (countOff()) localStorage.removeItem(COUNT_OFF); else localStorage.setItem(COUNT_OFF, '1'); } catch (e) {}
+    renderCountNote();
+  });
+  var SRC = readSource();
+  renderCountNote();
+  countOpen(SRC);
+
+  render();
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    var hadController = !!navigator.serviceWorker.controller, reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function () { if (hadController && !reloaded) { reloaded = true; location.reload(); } });
+    navigator.serviceWorker.register('sw.js').then(function (reg) { try { reg.update(); } catch (e) {} }).catch(function () {});
+  }
+})();
+</script>
+</body>
+</html>

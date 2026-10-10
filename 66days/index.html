@@ -457,6 +457,7 @@ dialog { overflow:auto; }
     <button type="button" class="item" id="mBackup">記録をバックアップする<small>文字のかたまりをコピーして、メモ帳などに貼っておく</small></button>
     <button type="button" class="item" id="mRestore">バックアップから戻す<small>機種変更したときや、記録が消えたときに</small></button>
     <button type="button" class="item" id="mPrint">印刷する<small>紙のチェック表としても使えます</small></button>
+    <a class="item" href="../" style="text-decoration:none">ほかの道具を開く<small>閉じて思い出す（第3回）など。このアプリの中で開きます</small></a>
     <button type="button" class="item danger" id="mReset">記録を消して、新しく始める</button>
     <button type="button" class="btn" id="mClose">閉じる</button>
   </div>
@@ -1098,7 +1099,7 @@ dialog { overflow:auto; }
   // 送るもの：道具の名前・リンクの印（?src=）・ホーム画面から開いたか・アプリの版。名前・記録・端末ID・Cookie・位置は送らない。
   // 送らないとき：公開URL以外／「送らないようにする」を押したとき／ブラウザの「追跡しない」（DNT・GPC）がオンのとき
   var COUNTER_URL = 'https://script.google.com/macros/s/AKfycbw5hLZfocHHSr7gFTrMAI_UL_EJNVPL8Pi8zG0BJ39n8amavnXcdHqCdp6Ujz2Qa_A/exec';
-  var APP_ID = 'tsuzuku-66days', APP_V = '1.2', PUBLIC_HOST = 'omicreate.github.io';
+  var APP_ID = 'tsuzuku-66days', APP_V = '1.3', PUBLIC_HOST = 'omicreate.github.io';
   var COUNT_OFF = 'tsuzuku-count-off', SRC_KEY = 'tsuzuku-src';
   function cleanSrc(v) { return v && /^[A-Za-z0-9_-]{1,40}$/.test(v) ? v : ''; }
   function readSource() { // ?src= を読んで覚え、アドレスからは消す（そのURLを人に送っても、印が広がらないように）
